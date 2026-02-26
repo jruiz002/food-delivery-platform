@@ -1,0 +1,75 @@
+# ==========================================
+# MONOREPO FOOD DELIVERY PLATFORM (.gitignore)
+# ==========================================
+
+# Entornos y Variables
+.env
+.env.*
+!.env.example
+
+# Dependencias (Node) - Ignorar en cualquier lugar
+node_modules/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Compilados y Build Generales
+dist/
+build/
+out-tsc/
+
+# Compilados de NestJS (Backend: core-api)
+core-api/.nest/
+
+# Compilados de Angular (Frontend: web-app)
+web-app/.angular/
+web-app/.cache/
+
+# Logs Globales
+logs
+*.log
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Cobertura de Pruebas
+coverage/
+.nyc_output/
+
+# Reportes y Diagnósticos
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Archivos Temporales y Runtime
+.temp
+.tmp
+*.tmp
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDEs y Editores
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Caché de Linter
+.eslintcache
