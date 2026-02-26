@@ -14,7 +14,11 @@ export class UsersRepository {
     return createdUser.save();
   }
 
-  async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+  // Ahora buscamos por correo Y rol
+  async findByEmailAndRole(
+    email: string,
+    role: string,
+  ): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email, role }).exec();
   }
 }
