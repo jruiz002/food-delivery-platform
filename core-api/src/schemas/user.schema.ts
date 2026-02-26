@@ -26,7 +26,7 @@ export class User {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   email: string;
 
   @Prop({ required: true })
@@ -46,3 +46,6 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// Índice compuesto único: El mismo correo puede existir pero con DIFERENTE rol
+UserSchema.index({ email: 1, role: 1 }, { unique: true });
