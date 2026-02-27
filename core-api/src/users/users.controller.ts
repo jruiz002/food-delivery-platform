@@ -18,7 +18,7 @@ export class UsersController {
   @Post('login')
   async login(
     @Body() loginUserDto: LoginUserDto,
-  ): Promise<Omit<User, 'passwordHash'>> {
+  ): Promise<{ accessToken: string; user: Omit<User, 'passwordHash'> }> {
     return this.usersService.login(loginUserDto);
   }
 }

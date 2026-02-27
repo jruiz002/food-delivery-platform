@@ -4,14 +4,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 import { UsersRepository } from './users.repository';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { User } from '../schemas/user.schema';
+import { User, UserDocument } from '../schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async register(
     registerUserDto: RegisterUserDto,
@@ -50,12 +54,14 @@ export class UsersService {
     return userObj as Omit<User, 'passwordHash'>;
   }
 
-  async login(loginUserDto: LoginUserDto): Promise<Omit<User, 'passwordHash'>> {
-    // 1. Buscar al usuario usando explícitamente el correo y el rol especificado en el Login
-    const user = await this.usersRepository.findByEmailAndRole(
+  async login(
+    loginUserDto: LoginUserDto,
+  ): Promise<{ accessToken: string; user: Omit<User, 'passwordHash'> }> {
+    // 1. Buscar al usuario
+    const user = (await this.usersRepository.findByEmailAndRole(
       loginUserDto.email,
       loginUserDto.role,
-    );
+    )) as UserDocument;
 
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
@@ -71,9 +77,17 @@ export class UsersService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // 3. Retornar objeto seguro simulando JWT/Session (luego se puede agregar el token real)
+    // 3. Generar token JWT con la información no sensible de sesión
+    const payload = { sub: user._id, email: user.email, role: user.role };
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    // 4. Retornar objeto seguro simulando JWT/Session (sin passwordHash)
     const userObj = user.toObject() as Partial<User>;
     delete userObj.passwordHash;
-    return userObj as Omit<User, 'passwordHash'>;
+
+    return {
+      accessToken,
+      user: userObj as Omit<User, 'passwordHash'>,
+    };
   }
 }
