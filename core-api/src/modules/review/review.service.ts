@@ -10,7 +10,7 @@ export class ReviewService {
 
   async create(createReviewDto: CreateReviewDto): Promise<Review> {
     // TODO: Verify if the user has an order from this restaurant (when Order module is ready)
-    
+
     return this.reviewRepository.create(createReviewDto);
   }
 
@@ -22,12 +22,19 @@ export class ReviewService {
     return review;
   }
 
-  async findAll(order: 'asc' | 'desc' = 'desc', page: number = 1, limit: number = 10): Promise<Review[]> {
+  async findAll(
+    order: 'asc' | 'desc' = 'desc',
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<Review[]> {
     return this.reviewRepository.findAll(order, page, limit);
   }
 
   async update(id: string, updateReviewDto: UpdateReviewDto): Promise<Review> {
-    const updatedReview = await this.reviewRepository.update(id, updateReviewDto);
+    const updatedReview = await this.reviewRepository.update(
+      id,
+      updateReviewDto,
+    );
     if (!updatedReview) {
       throw new NotFoundException(`Review with ID ${id} not found`);
     }

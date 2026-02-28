@@ -1,17 +1,25 @@
-import { IsInt, IsMongoId, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateReviewDto {
   @IsMongoId()
   @IsNotEmpty()
-  userId: string; 
+  userId: string;
 
   @IsMongoId()
   @IsNotEmpty()
-  restaurantId: string; 
+  restaurantId: string;
 
   @IsMongoId()
   @IsOptional()
-  menuItemId?: string; 
+  menuItemId?: string;
 
   @IsMongoId()
   @IsNotEmpty()

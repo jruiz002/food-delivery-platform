@@ -6,7 +6,8 @@ import { Restaurant, RestaurantDocument } from '../schemas/restaurant.schema';
 @Injectable()
 export class RestaurantRepository {
   constructor(
-    @InjectModel(Restaurant.name) private restaurantModel: Model<RestaurantDocument>,
+    @InjectModel(Restaurant.name)
+    private restaurantModel: Model<RestaurantDocument>,
   ) {}
 
   async findAll(
@@ -41,8 +42,14 @@ export class RestaurantRepository {
     return createdRestaurant.save();
   }
 
-  async update(id: string, updateRestaurantDto: any, options: { new: boolean }): Promise<Restaurant | null> {
-    return this.restaurantModel.findByIdAndUpdate(id, updateRestaurantDto, options).exec();
+  async update(
+    id: string,
+    updateRestaurantDto: any,
+    options: { new: boolean },
+  ): Promise<Restaurant | null> {
+    return this.restaurantModel
+      .findByIdAndUpdate(id, updateRestaurantDto, options)
+      .exec();
   }
 
   async delete(id: string): Promise<Restaurant | null> {
