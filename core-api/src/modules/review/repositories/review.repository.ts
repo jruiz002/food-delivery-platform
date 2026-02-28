@@ -29,7 +29,11 @@ export class ReviewRepository {
     return this.reviewModel.findById(id).exec();
   }
 
-  async findAll(sortOrder: 'asc' | 'desc' = 'desc', page: number = 1, limit: number = 10): Promise<Review[]> {
+  async findAll(
+    sortOrder: 'asc' | 'desc' = 'desc',
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<Review[]> {
     const sortValue = sortOrder === 'asc' ? 1 : -1;
     const skip = (page - 1) * limit;
     return this.reviewModel

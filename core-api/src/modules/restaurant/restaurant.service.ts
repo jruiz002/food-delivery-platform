@@ -20,9 +20,14 @@ export class RestaurantService {
     limit: number = 10,
     skip: number = 0,
   ): Promise<Restaurant[]> {
-    return this.restaurantRepository.findAll(filter, projection, sort, limit, skip);
+    return this.restaurantRepository.findAll(
+      filter,
+      projection,
+      sort,
+      limit,
+      skip,
+    );
   }
-
 
   async findAllMenuItems(
     search?: string,
@@ -32,9 +37,7 @@ export class RestaurantService {
     sortBy: string = 'name',
     order: 'asc' | 'desc' = 'asc',
   ): Promise<any[]> {
-    const pipeline: any[] = [
-      { $unwind: '$menu' },
-    ];
+    const pipeline: any[] = [{ $unwind: '$menu' }];
 
     // Filter by status
     if (status === 'available') {
@@ -86,7 +89,6 @@ export class RestaurantService {
     return this.restaurantRepository.findAllMenuItems(pipeline);
   }
 
-
   async findOne(id: string): Promise<Restaurant> {
     const restaurant = await this.restaurantRepository.findById(id);
     if (!restaurant) {
@@ -95,15 +97,25 @@ export class RestaurantService {
     return restaurant;
   }
 
-  async update(id: string, updateRestaurantDto: UpdateRestaurantDto): Promise<Restaurant> {
-    const updatedRestaurant = await this.restaurantRepository.update(id, updateRestaurantDto, { new: true });
+  async update(
+    id: string,
+    updateRestaurantDto: UpdateRestaurantDto,
+  ): Promise<Restaurant> {
+    const updatedRestaurant = await this.restaurantRepository.update(
+      id,
+      updateRestaurantDto,
+      { new: true },
+    );
     if (!updatedRestaurant) {
       throw new NotFoundException(`Restaurant with ID ${id} not found`);
     }
     return updatedRestaurant;
   }
 
-  async updateMenu(id: string, menuItems: CreateMenuItemDto[]): Promise<Restaurant> {
+  async updateMenu(
+    id: string,
+    menuItems: CreateMenuItemDto[],
+  ): Promise<Restaurant> {
     const updatedRestaurant = await this.restaurantRepository.update(
       id,
       { $set: { menu: menuItems } },

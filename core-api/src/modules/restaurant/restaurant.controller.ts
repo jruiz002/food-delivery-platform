@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, ParseArrayPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Put,
+  ParseArrayPipe,
+  Query,
+} from '@nestjs/common';
 import { RestaurantService } from './restaurant.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
@@ -54,7 +65,14 @@ export class RestaurantController {
     @Query('sortBy') sortBy: string = 'name',
     @Query('order') order: 'asc' | 'desc' = 'asc',
   ) {
-    return this.restaurantService.findAllMenuItems(search, status, Number(page), Number(limit), sortBy, order);
+    return this.restaurantService.findAllMenuItems(
+      search,
+      status,
+      Number(page),
+      Number(limit),
+      sortBy,
+      order,
+    );
   }
 
   @Get(':id')
@@ -63,14 +81,18 @@ export class RestaurantController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRestaurantDto: UpdateRestaurantDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateRestaurantDto: UpdateRestaurantDto,
+  ) {
     return this.restaurantService.update(id, updateRestaurantDto);
   }
 
   @Put(':id/menu')
   updateMenu(
     @Param('id') id: string,
-    @Body(new ParseArrayPipe({ items: CreateMenuItemDto })) menuItems: CreateMenuItemDto[],
+    @Body(new ParseArrayPipe({ items: CreateMenuItemDto }))
+    menuItems: CreateMenuItemDto[],
   ) {
     return this.restaurantService.updateMenu(id, menuItems);
   }
