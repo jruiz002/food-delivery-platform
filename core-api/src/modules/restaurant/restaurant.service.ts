@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
-import { Restaurant } from '../../schemas/restaurant.schema';
+import { Restaurant } from './schemas/restaurant.schema';
 import { CreateMenuItemDto } from './dto/create-menu-item.dto';
 import { RestaurantRepository } from './repositories/restaurant.repository';
 

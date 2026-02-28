@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RestaurantService } from './restaurant.service';
 import { RestaurantController } from './restaurant.controller';
-import { Restaurant, RestaurantSchema } from '../../schemas/restaurant.schema';
+import { Restaurant, RestaurantSchema } from './schemas/restaurant.schema';
 import { RestaurantRepository } from './repositories/restaurant.repository';
 
 @Module({
