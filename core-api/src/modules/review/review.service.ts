@@ -1,15 +1,33 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewRepository } from './repositories/review.repository';
 import { Review } from './schemas/review.schema';
+import { OrdersService } from '../orders/orders.service';
 
 @Injectable()
 export class ReviewService {
-  constructor(private readonly reviewRepository: ReviewRepository) {}
+  constructor(
+    private readonly reviewRepository: ReviewRepository,
+    private readonly ordersService: OrdersService,
+  ) {}
 
   async create(createReviewDto: CreateReviewDto): Promise<Review> {
-    // TODO: Verify if the user has an order from this restaurant (when Order module is ready)
+    const hasOrdered =
+      await this.ordersService.verifyUserPurchasedFromRestaurant(
+        createReviewDto.userId,
+        createReviewDto.restaurantId,
+      );
+
+    if (!hasOrdered) {
+      throw new BadRequestException(
+        'El usuario no puede realizar una reseña a este restaurante sin antes haber consumido allí.',
+      );
+    }
 
     return this.reviewRepository.create(createReviewDto);
   }
