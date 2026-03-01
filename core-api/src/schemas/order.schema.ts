@@ -14,8 +14,8 @@ export class OrderItem {
   @Prop({ required: true, type: Number })
   quantity: number;
 
-  @Prop({ required: true, type: Number })
-  price: number;
+  @Prop({ required: true, type: Types.Decimal128 })
+  price: Types.Decimal128;
 }
 
 @Schema({ collection: 'orders', timestamps: true }) // Mongoose gestionará createdAt y updatedAt
@@ -29,8 +29,8 @@ export class Order {
   @Prop({ type: [OrderItem], required: true })
   items: OrderItem[];
 
-  @Prop({ required: true, type: Number })
-  totalAmount: number;
+  @Prop({ required: true, type: Types.Decimal128 })
+  totalAmount: Types.Decimal128;
 
   @Prop({
     type: String,
