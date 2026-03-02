@@ -74,8 +74,17 @@ export class OrdersService {
     return this.ordersRepository.create(orderData);
   }
 
-  async getUserHistory(userId: string) {
-    return this.ordersRepository.findByUserId(userId);
+  async getUserHistory(
+    userId: string,
+    query: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      restaurant_id?: string;
+    } = {},
+  ) {
+    return this.ordersRepository.findByUserId(userId, query);
   }
 
   async verifyUserPurchasedFromRestaurant(

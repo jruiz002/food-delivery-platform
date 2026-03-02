@@ -5,6 +5,7 @@ import {
   Post,
   UseGuards,
   UnauthorizedException,
+  Query,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -32,13 +33,29 @@ export class OrdersController {
 
   @Get('history')
   @UseGuards(JwtAuthGuard)
-  async getHistory(@GetUser('sub') userId: string) {
+  async getHistory(
+    @GetUser('sub') userId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('restaurant_id') restaurant_id?: string,
+  ) {
     if (!userId) {
       throw new UnauthorizedException(
         'No se pudo identificar al usuario desde el token.',
       );
     }
 
-    return this.ordersService.getUserHistory(userId);
+    const parsedPage = page ? parseInt(page, 10) : 1;
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+
+    return this.ordersService.getUserHistory(userId, {
+      page: parsedPage,
+      limit: parsedLimit,
+      sortBy,
+      sortOrder,
+      restaurant_id,
+    });
   }
 }
