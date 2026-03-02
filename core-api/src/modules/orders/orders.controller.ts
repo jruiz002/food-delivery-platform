@@ -6,6 +6,7 @@ import {
   UseGuards,
   UnauthorizedException,
   Query,
+  Param,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -57,5 +58,21 @@ export class OrdersController {
       sortOrder,
       restaurant_id,
     });
+  }
+
+  @Get('restaurant/:restaurantId/analytics')
+  @UseGuards(JwtAuthGuard)
+  async getAnalytics(
+    @Param('restaurantId') restaurantId: string,
+    @GetUser('role') role: string,
+  ) {
+    // Restricción de Dominio: Sólo los restaurantes deberían ver sus propias analíticas
+    if (role !== 'restaurant') {
+      throw new UnauthorizedException(
+        'Acceso denegado: Se requiere ser un restaurante para ver analíticas.',
+      );
+    }
+
+    return this.ordersService.getRestaurantAnalytics(restaurantId);
   }
 }
