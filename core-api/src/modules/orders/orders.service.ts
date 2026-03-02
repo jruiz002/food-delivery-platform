@@ -93,4 +93,17 @@ export class OrdersService {
   ): Promise<boolean> {
     return this.ordersRepository.userHasOrdered(userId, restaurantId);
   }
+
+  async getRestaurantAnalytics(restaurantId: string) {
+    // Ejecutamos ambas consultas analíticas en paralelo para mayor eficiencia
+    const [metrics, topDishes] = await Promise.all([
+      this.ordersRepository.getRestaurantMetrics(restaurantId),
+      this.ordersRepository.getTopDishes(restaurantId, 5),
+    ]);
+
+    return {
+      metrics,
+      topDishes,
+    };
+  }
 }

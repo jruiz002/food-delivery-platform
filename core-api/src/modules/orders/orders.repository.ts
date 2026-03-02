@@ -91,4 +91,47 @@ export class OrdersRepository {
       .exec();
     return count > 0;
   }
+
+  // Agregaciones Simples (countDocuments, distinct)
+  async getRestaurantMetrics(restaurantId: string) {
+    const totalOrders = await this.orderModel
+      .countDocuments({ restaurant_id: new Types.ObjectId(restaurantId) })
+      .exec();
+
+    // distinct devuelve un array de objects/ids únicos. Medimos su longitud.
+    const uniqueCustomersArray = await this.orderModel
+      .distinct('user_id', { restaurant_id: new Types.ObjectId(restaurantId) })
+      .exec();
+
+    return {
+      totalOrders,
+      uniqueCustomers: uniqueCustomersArray.length,
+    };
+  }
+
+  // Agregación Compleja ($unwind, $group, $sum, $sort, $limit)
+  async getTopDishes(restaurantId: string, limit: number = 5): Promise<any[]> {
+    return this.orderModel
+      .aggregate([
+        { $match: { restaurant_id: new Types.ObjectId(restaurantId) } },
+        { $unwind: '$items' },
+        {
+          $group: {
+            // Agrupamos por ID del platillo
+            _id: '$items.menu_item_id',
+            name: { $first: '$items.name' },
+            // Sumamos cuántas veces se pidió
+            totalQuantitySold: { $sum: '$items.quantity' },
+            // Calculamos cuánto dinero generó el platillo
+            totalRevenue: {
+              $sum: { $multiply: ['$items.quantity', '$items.price'] },
+            },
+          },
+        },
+        // Ordenar del más vendido al menos vendido
+        { $sort: { totalQuantitySold: -1 } },
+        { $limit: limit },
+      ])
+      .exec();
+  }
 }
