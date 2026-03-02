@@ -14,10 +14,43 @@ export class OrdersRepository {
     return createdOrder.save();
   }
 
-  async findByUserId(userId: string): Promise<any[]> {
+  async findByUserId(
+    userId: string,
+    query: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      restaurant_id?: string;
+    } = {},
+  ): Promise<any[]> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      restaurant_id,
+    } = query;
+
+    const skip = (page - 1) * limit;
+
+    const matchStage: any = { user_id: new Types.ObjectId(userId) };
+
+    if (restaurant_id) {
+      matchStage.restaurant_id = new Types.ObjectId(restaurant_id);
+    }
+
+    const sortStage: any = {};
+    // -1 para desc, 1 para asc
+    sortStage[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
     return this.orderModel
       .aggregate([
-        { $match: { user_id: new Types.ObjectId(userId) } },
+        { $match: matchStage },
+        // Ordenamos y paginamos ANTES del lookup para que sea drásticamente más rápido
+        { $sort: sortStage },
+        { $skip: skip },
+        { $limit: limit },
         {
           $lookup: {
             from: 'restaurants',
@@ -39,7 +72,6 @@ export class OrdersRepository {
             'restaurant.location': '$restaurantData.location',
           },
         },
-        { $sort: { createdAt: -1 } },
       ])
       .exec();
   }
