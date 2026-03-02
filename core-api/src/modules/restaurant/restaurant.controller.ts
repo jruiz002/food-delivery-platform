@@ -9,19 +9,27 @@ import {
   Put,
   ParseArrayPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { RestaurantService } from './restaurant.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { CreateMenuItemDto } from './dto/create-menu-item.dto';
 
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { GetUser } from '../../common/decorators/get-user.decorator';
+
 @Controller('restaurant')
 export class RestaurantController {
   constructor(private readonly restaurantService: RestaurantService) {}
 
   @Post()
-  create(@Body() createRestaurantDto: CreateRestaurantDto) {
-    return this.restaurantService.create(createRestaurantDto);
+  @UseGuards(JwtAuthGuard)
+  create(
+    @GetUser('sub') userId: string,
+    @Body() createRestaurantDto: CreateRestaurantDto,
+  ) {
+    return this.restaurantService.create(userId, createRestaurantDto);
   }
 
   @Get()

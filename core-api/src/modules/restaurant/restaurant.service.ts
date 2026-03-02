@@ -4,13 +4,21 @@ import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { Restaurant } from './schemas/restaurant.schema';
 import { CreateMenuItemDto } from './dto/create-menu-item.dto';
 import { RestaurantRepository } from './repositories/restaurant.repository';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class RestaurantService {
   constructor(private readonly restaurantRepository: RestaurantRepository) {}
 
-  async create(createRestaurantDto: CreateRestaurantDto): Promise<Restaurant> {
-    return this.restaurantRepository.create(createRestaurantDto);
+  async create(
+    userId: string,
+    createRestaurantDto: CreateRestaurantDto,
+  ): Promise<Restaurant> {
+    const restaurantData = {
+      ...createRestaurantDto,
+      owner_id: new Types.ObjectId(userId),
+    };
+    return this.restaurantRepository.create(restaurantData as any);
   }
 
   async findAll(
