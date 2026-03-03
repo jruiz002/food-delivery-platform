@@ -10,12 +10,13 @@ import {
   ParseArrayPipe,
   Query,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { RestaurantService } from './restaurant.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { CreateMenuItemDto } from './dto/create-menu-item.dto';
-
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -27,8 +28,12 @@ export class RestaurantController {
   @UseGuards(JwtAuthGuard)
   create(
     @GetUser('sub') userId: string,
+    @GetUser('role') role: string,
     @Body() createRestaurantDto: CreateRestaurantDto,
   ) {
+    if (role === 'consumer') {
+      throw new ForbiddenException('Consumers cannot create restaurants');
+    }
     return this.restaurantService.create(userId, createRestaurantDto);
   }
 
@@ -40,11 +45,17 @@ export class RestaurantController {
     @Query('limit') limit: number = 10,
     @Query('sortBy') sortBy: string = 'name',
     @Query('order') order: 'asc' | 'desc' = 'asc',
+    @Query('ownerId') ownerId?: string,
   ) {
     const filter: any = {};
     const sort: any = {};
     const limitNum = Number(limit);
     const skip = (page - 1) * limitNum;
+
+    // Filter by ownerId
+    if (ownerId) {
+      filter.owner_id = new Types.ObjectId(ownerId);
+    }
 
     // Filter by status
     if (status === 'active') {
@@ -89,24 +100,38 @@ export class RestaurantController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id') id: string,
     @Body() updateRestaurantDto: UpdateRestaurantDto,
+    @GetUser('role') role: string,
   ) {
+    if (role === 'consumer') {
+      throw new ForbiddenException('Consumers cannot update restaurants');
+    }
     return this.restaurantService.update(id, updateRestaurantDto);
   }
 
   @Put(':id/menu')
+  @UseGuards(JwtAuthGuard)
   updateMenu(
     @Param('id') id: string,
     @Body(new ParseArrayPipe({ items: CreateMenuItemDto }))
     menuItems: CreateMenuItemDto[],
+    @GetUser('role') role: string,
   ) {
+    if (role === 'consumer') {
+      throw new ForbiddenException('Consumers cannot update menu');
+    }
     return this.restaurantService.updateMenu(id, menuItems);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string,  @GetUser('role') role: string) {
+    if (role === 'consumer') {
+      throw new ForbiddenException('Consumers cannot delete restaurants');
+    }
     return this.restaurantService.remove(id);
   }
 }

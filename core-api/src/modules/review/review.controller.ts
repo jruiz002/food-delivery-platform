@@ -7,17 +7,32 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { GetUser } from '../../common/decorators/get-user.decorator';
 
 @Controller('review')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Post()
-  create(@Body() createReviewDto: CreateReviewDto) {
+  @UseGuards(JwtAuthGuard)
+  create(
+    @Body() createReviewDto: CreateReviewDto,
+    @GetUser('role') role: string,
+    @GetUser('sub') userId: string,
+  ) {
+    if (role === 'restaurant') {
+      throw new ForbiddenException('Restaurants cannot review');
+    }
+    // Set userId from token
+    createReviewDto.userId = userId;
     return this.reviewService.create(createReviewDto);
   }
 
@@ -36,12 +51,26 @@ export class ReviewController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
-    return this.reviewService.update(id, updateReviewDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateReviewDto: UpdateReviewDto,
+    @GetUser('role') role: string,
+    @GetUser('sub') userId: string,
+  ) {
+    if (role === 'restaurant') {
+      throw new ForbiddenException('Restaurants cannot update reviews');
+    }
+    return this.reviewService.update(id, updateReviewDto, userId); 
   }
 
   @Delete('batch')
-  deleteMany(@Body() ids: string[]) {
-    return this.reviewService.deleteMany(ids);
+  @UseGuards(JwtAuthGuard)
+  deleteMany(
+    @Body() ids: string[],
+    @GetUser('role') role: string,
+    @GetUser('sub') userId: string,
+  ) {
+    return this.reviewService.deleteMany(ids, role, userId);
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Order, OrderDocument } from '../../schemas/order.schema';
+import { Order, OrderDocument } from './schemas/order.schema';
 
 @Injectable()
 export class OrdersRepository {
@@ -109,7 +109,19 @@ export class OrdersRepository {
     };
   }
 
-  // Agregación Compleja ($unwind, $group, $sum, $sort, $limit)
+  async updateStatus(
+    orderId: string,
+    status: string,
+  ): Promise<OrderDocument | null> {
+    return this.orderModel
+      .findByIdAndUpdate(
+        orderId,
+        { status, deliveredAt: status === 'Delivered' ? new Date() : null },
+        { new: true },
+      )
+      .exec();
+  }
+
   async getTopDishes(restaurantId: string, limit: number = 5): Promise<any[]> {
     return this.orderModel
       .aggregate([

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -48,7 +49,19 @@ export class ReviewService {
     return this.reviewRepository.findAll(order, page, limit);
   }
 
-  async update(id: string, updateReviewDto: UpdateReviewDto): Promise<Review> {
+  async update(
+    id: string,
+    updateReviewDto: UpdateReviewDto,
+    userId: string,
+  ): Promise<Review> {
+    const review = await this.findOne(id);
+
+    if (review.user_id.toString() !== userId) {
+      throw new ForbiddenException(
+        'No tienes permiso para modificar esta reseña.',
+      );
+    }
+
     const updatedReview = await this.reviewRepository.update(
       id,
       updateReviewDto,
@@ -59,7 +72,23 @@ export class ReviewService {
     return updatedReview;
   }
 
-  async deleteMany(ids: string[]): Promise<any> {
+  async deleteMany(
+    ids: string[],
+    role: string,
+    userId: string,
+  ): Promise<any> {
+    if (role === 'consumer') {
+      const notOwnedCount = await this.reviewRepository.countNotOwned(
+        ids,
+        userId,
+      );
+      if (notOwnedCount > 0) {
+        throw new ForbiddenException(
+          'You do not have permission to delete one or more of these reviews.',
+        );
+      }
+      return this.reviewRepository.deleteManyByUser(ids, userId);
+    }
     return this.reviewRepository.deleteMany(ids);
   }
 }

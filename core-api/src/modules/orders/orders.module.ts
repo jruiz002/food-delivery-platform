@@ -5,7 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { OrdersRepository } from './orders.repository';
-import { Order, OrderSchema } from '../../schemas/order.schema';
+import { Order, OrderSchema } from './schemas/order.schema';
 import { RestaurantModule } from '../restaurant/restaurant.module';
 
 @Module({

@@ -57,4 +57,29 @@ export class ReviewRepository {
     const objectIds = ids.map((id) => new Types.ObjectId(id));
     return this.reviewModel.deleteMany({ _id: { $in: objectIds } }).exec();
   }
+
+  async findByIds(ids: string[]): Promise<Review[]> {
+    const objectIds = ids.map((id) => new Types.ObjectId(id));
+    return this.reviewModel.find({ _id: { $in: objectIds } }).exec();
+  }
+
+  async countNotOwned(ids: string[], userId: string): Promise<number> {
+    const objectIds = ids.map((id) => new Types.ObjectId(id));
+    return this.reviewModel
+      .countDocuments({
+        _id: { $in: objectIds },
+        user_id: { $ne: new Types.ObjectId(userId) },
+      })
+      .exec();
+  }
+
+  async deleteManyByUser(ids: string[], userId: string): Promise<any> {
+    const objectIds = ids.map((id) => new Types.ObjectId(id));
+    return this.reviewModel
+      .deleteMany({
+        _id: { $in: objectIds },
+        user_id: new Types.ObjectId(userId),
+      })
+      .exec();
+  }
 }

@@ -2,12 +2,13 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersRepository } from './orders.repository';
 import { RestaurantService } from '../restaurant/restaurant.service';
 import { Types } from 'mongoose';
-import { Order } from '../../schemas/order.schema';
+import { Order } from './schemas/order.schema';
 
 @Injectable()
 export class OrdersService {
@@ -105,5 +106,46 @@ export class OrdersService {
       metrics,
       topDishes,
     };
+  }
+
+  async updateStatus(
+    orderId: string,
+    status: string,
+    userId: string,
+  ): Promise<Order> {
+    const order = await this.ordersRepository.findById(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    const restaurant = await this.restaurantService.findOne(
+      order.restaurant_id.toString(),
+    );
+    if (!restaurant) {
+      throw new NotFoundException(
+        `Restaurant with ID ${order.restaurant_id} not found`,
+      );
+    }
+
+    if (!restaurant.owner_id) {
+      throw new ForbiddenException(
+        'The restaurant associated with this order has no owner assigned.',
+      );
+    }
+
+    if (restaurant.owner_id.toString() !== userId) {
+      throw new ForbiddenException(
+        'You are not the owner of the restaurant for this order.',
+      );
+    }
+
+    const updatedOrder = await this.ordersRepository.updateStatus(
+      orderId,
+      status,
+    );
+    if (!updatedOrder) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+    return updatedOrder;
   }
 }

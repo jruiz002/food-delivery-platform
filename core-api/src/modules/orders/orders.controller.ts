@@ -3,13 +3,16 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   UseGuards,
   UnauthorizedException,
   Query,
   Param,
+  ForbiddenException,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -74,5 +77,25 @@ export class OrdersController {
     }
 
     return this.ordersService.getRestaurantAnalytics(restaurantId);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
+  async updateStatus(
+    @Param('id') orderId: string,
+    @Body() updateOrderStatusDto: UpdateOrderStatusDto,
+    @GetUser('role') role: string,
+    @GetUser('sub') userId: string,
+  ) {
+    if (role !== 'restaurant') {
+      throw new ForbiddenException(
+        'Only restaurant users can update order status.',
+      );
+    }
+    return this.ordersService.updateStatus(
+      orderId,
+      updateOrderStatusDto.status,
+      userId,
+    );
   }
 }

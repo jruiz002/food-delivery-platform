@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersRepository } from './users.repository';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { User, UserDocument } from '../../schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
