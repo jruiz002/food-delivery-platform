@@ -1,0 +1,51 @@
+import { inject } from '@angular/core';
+import { Router, CanActivateFn } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+/**
+ * Guard que protege rutas que requieren autenticación
+ */
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+
+  // Redirigir al login si no está autenticado
+  router.navigate(['/auth/login'], { 
+    queryParams: { returnUrl: state.url }
+  });
+  return false;
+};
+
+/**
+ * Guard que verifica que el usuario sea 'consumer'
+ */
+export const consumerGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated() && authService.isConsumer()) {
+    return true;
+  }
+
+  router.navigate(['/']);
+  return false;
+};
+
+/**
+ * Guard que verifica que el usuario sea 'restaurant'
+ */
+export const restaurantGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated() && authService.isRestaurant()) {
+    return true;
+  }
+
+  router.navigate(['/']);
+  return false;
+};
