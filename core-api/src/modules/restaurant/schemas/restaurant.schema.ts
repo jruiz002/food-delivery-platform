@@ -47,5 +47,17 @@ export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);
 // A. Índice Multikey para búsqueda eficiente en el menú por tags
 RestaurantSchema.index({ 'menu.tags': 1 }); // Permite búsqueda eficiente en arrays
 
-// C. Índice de Texto para búsqueda por palabras clave en descripciones/nombres
+// B. Índice en owner_id para filtrar restaurantes por dueño (crítico para consultas de restaurantes)
+RestaurantSchema.index({ owner_id: 1 });
+
+// C. Índice en isActive para filtrar por status (activo/inactivo)
+RestaurantSchema.index({ isActive: 1 });
+
+// D. Índice compuesto para ordenar por fecha de creación
+RestaurantSchema.index({ createdAt: -1 });
+
+// E. Índice de Texto para búsqueda por palabras clave en descripciones/nombres
 RestaurantSchema.index({ name: 'text', description: 'text' });
+
+// F. Índice compuesto para consultas comunes (owner + status)
+RestaurantSchema.index({ owner_id: 1, isActive: 1 });

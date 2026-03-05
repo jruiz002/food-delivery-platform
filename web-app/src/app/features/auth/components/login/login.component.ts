@@ -50,7 +50,7 @@ export class LoginComponent {
           if (response.user.role === 'consumer') {
             this.router.navigate(['/restaurants']);
           } else {
-            this.router.navigate(['/dashboard']);
+            this.router.navigate(['/restaurants']);
           }
         }, 1000);
       },

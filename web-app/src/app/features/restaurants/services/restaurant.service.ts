@@ -23,7 +23,7 @@ export class RestaurantService {
    * GET /restaurant
    * Obtener lista de restaurantes con filtros
    */
-  getAll(filters?: RestaurantFilters): Observable<Restaurant[]> {
+  getAll(filters?: RestaurantFilters): Observable<{ data: Restaurant[]; total: number }> {
     let params = new HttpParams();
     
     if (filters) {
@@ -36,7 +36,7 @@ export class RestaurantService {
       if (filters.ownerId) params = params.set('ownerId', filters.ownerId);
     }
 
-    return this.http.get<Restaurant[]>(this.apiUrl, { params });
+    return this.http.get<{ data: Restaurant[]; total: number }>(this.apiUrl, { params });
   }
 
   /**
