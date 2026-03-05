@@ -2,18 +2,18 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LoginDto } from '../../models/auth.model';
+import { RegisterDto } from '../../models/auth.model';
 import { AuthService } from '@core/services/auth.service';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, MatIconModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  templateUrl: './register.component.html',
+  styleUrls: ['./register.component.css']
 })
-export class LoginComponent {
+export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -24,7 +24,8 @@ export class LoginComponent {
   showPassword = signal(false);
 
   // Datos del formulario
-  loginData: LoginDto = {
+  registerData: RegisterDto = {
+    name: '',
     email: '',
     password: '',
     role: 'consumer'
@@ -34,29 +35,40 @@ export class LoginComponent {
     this.showPassword.set(!this.showPassword());
   }
 
+  selectRole(role: 'consumer' | 'restaurant') {
+    this.registerData.role = role;
+  }
+
   onSubmit() {
+    // Validaciones básicas
+    if (!this.registerData.name || !this.registerData.email || !this.registerData.password) {
+      this.error.set('Please fill in all fields');
+      return;
+    }
+
+    if (this.registerData.password.length < 6) {
+      this.error.set('Password must be at least 6 characters long');
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
     this.successMessage.set(null);
 
-    this.authService.login(this.loginData).subscribe({
+    this.authService.register(this.registerData).subscribe({
       next: (response) => {
-        console.log('Login exitoso', response);
-        this.successMessage.set('¡Login exitoso! Bienvenido ' + response.user.name);
+        console.log('Registro exitoso', response);
+        this.successMessage.set('¡Account created successfully! Redirecting to login...');
         this.loading.set(false);
         
-        // Navegar según el rol
+        // Redirigir al login después de 2 segundos
         setTimeout(() => {
-          if (response.user.role === 'consumer') {
-            this.router.navigate(['/restaurants']);
-          } else {
-            this.router.navigate(['/dashboard']);
-          }
-        }, 1000);
+          this.router.navigate(['/login']);
+        }, 2000);
       },
       error: (err) => {
-        console.error('Error en login', err);
-        this.error.set(err.error?.message || 'Error al iniciar sesión');
+        console.error('Error en registro', err);
+        this.error.set(err.error?.message || 'Error creating account. Please try again.');
         this.loading.set(false);
       }
     });
