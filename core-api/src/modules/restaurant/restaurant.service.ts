@@ -27,14 +27,13 @@ export class RestaurantService {
     sort: any = {},
     limit: number = 10,
     skip: number = 0,
-  ): Promise<Restaurant[]> {
-    return this.restaurantRepository.findAll(
-      filter,
-      projection,
-      sort,
-      limit,
-      skip,
-    );
+  ): Promise<{ data: Restaurant[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.restaurantRepository.findAll(filter, projection, sort, limit, skip),
+      this.restaurantRepository.countDocuments(filter),
+    ]);
+
+    return { data, total };
   }
 
   async findAllMenuItems(

@@ -1,0 +1,227 @@
+<!-- Header -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">
+      <mat-icon>restaurant_menu</mat-icon>
+    </div>
+    <h2 class="logo-text">DeliverEats</h2>
+  </div>
+  <div class="header-actions">
+    @if (currentUser()) {
+      <div class="user-info">
+        <mat-icon class="user-icon">account_circle</mat-icon>
+        <span class="user-name">{{ currentUser()?.name }}</span>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    }
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-content">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="title-section">
+      <h1 class="page-title">{{ pageTitle() }}</h1>
+      <p class="page-subtitle">
+        @if (isRestaurant()) {
+          Manage your restaurants and menu items
+        } @else {
+          Discover and order from amazing restaurants
+        }
+      </p>
+    </div>
+    @if (isRestaurant()) {
+      <button class="btn-create" (click)="createNewRestaurant()">
+        <mat-icon>add</mat-icon>
+        <span>New Restaurant</span>
+      </button>
+    }
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <!-- Search -->
+    <div class="search-box">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search restaurants by name or description..."
+        [value]="searchTerm()"
+        (input)="onSearchChange($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Status Filter -->
+    <div class="filter-group">
+      <label class="filter-label">Status:</label>
+      <select 
+        class="filter-select" 
+        [value]="statusFilter()"
+        (change)="onStatusChange($any($event.target).value)"
+      >
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+
+    <!-- Sort -->
+    <div class="filter-group">
+      <label class="filter-label">Sort by:</label>
+      <button 
+        class="sort-btn"
+        [class.active]="sortBy() === 'name'"
+        (click)="onSortChange('name')"
+      >
+        Name
+        @if (sortBy() === 'name') {
+          <mat-icon class="sort-icon">{{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+        }
+      </button>
+      <button 
+        class="sort-btn"
+        [class.active]="sortBy() === 'createdAt'"
+        (click)="onSortChange('createdAt')"
+      >
+        Date
+        @if (sortBy() === 'createdAt') {
+          <mat-icon class="sort-icon">{{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="alert alert-error">
+      <mat-icon class="alert-icon">error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p class="loading-text">Loading restaurants...</p>
+    </div>
+  }
+
+  <!-- Restaurants Grid -->
+  @if (!loading() && restaurants().length > 0) {
+    <div class="restaurants-grid">
+      @for (restaurant of restaurants(); track restaurant._id) {
+        <div class="restaurant-card" (click)="viewRestaurantDetails(restaurant)">
+          <!-- Restaurant Image Placeholder -->
+          <div class="restaurant-image">
+            <mat-icon class="image-icon">restaurant</mat-icon>
+            @if (!restaurant.isActive) {
+              <div class="inactive-badge">Inactive</div>
+            }
+          </div>
+
+          <!-- Restaurant Info -->
+          <div class="restaurant-info">
+            <h3 class="restaurant-name">{{ restaurant.name }}</h3>
+            <p class="restaurant-description">{{ restaurant.description }}</p>
+            
+            <!-- Stats -->
+            <div class="restaurant-stats">
+              <div class="stat">
+                <mat-icon class="stat-icon">restaurant_menu</mat-icon>
+                <span>{{ restaurant.menu.length }} items</span>
+              </div>
+              <div class="stat">
+                <mat-icon class="stat-icon">{{ restaurant.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+                <span>{{ restaurant.isActive ? 'Active' : 'Inactive' }}</span>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button class="btn-view">
+              <span>{{ isRestaurant() ? 'Manage' : 'View Menu' }}</span>
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button 
+          class="page-btn"
+          [disabled]="currentPage() === 1"
+          (click)="onPageChange(currentPage() - 1)"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+
+        @for (page of getPageNumbers(); track page) {
+          <button 
+            class="page-btn"
+            [class.active]="currentPage() === page"
+            (click)="onPageChange(page)"
+          >
+            {{ page }}
+          </button>
+        }
+
+        <button 
+          class="page-btn"
+          [disabled]="currentPage() === totalPages()"
+          (click)="onPageChange(currentPage() + 1)"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && restaurants().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">restaurant</mat-icon>
+      <h3 class="empty-title">
+        @if (searchTerm() || statusFilter() !== 'all') {
+          No restaurants found
+        } @else if (isRestaurant()) {
+          You don't have any restaurants yet
+        } @else {
+          No restaurants available
+        }
+      </h3>
+      <p class="empty-text">
+        @if (searchTerm() || statusFilter() !== 'all') {
+          Try adjusting your search or filters
+        } @else if (isRestaurant()) {
+          Create your first restaurant to get started
+        } @else {
+          Check back later for new restaurants
+        }
+      </p>
+      @if (isRestaurant() && !searchTerm() && statusFilter() === 'all') {
+        <button class="btn-create" (click)="createNewRestaurant()">
+          <mat-icon>add</mat-icon>
+          <span>Create Restaurant</span>
+        </button>
+      }
+    </div>
+  }
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="#" class="footer-link">About Us</a>
+    <a href="#" class="footer-link">Contact</a>
+    <a href="#" class="footer-link">Help Center</a>
+  </div>
+  <p class="footer-copyright">© 2026 DeliverEats. All rights reserved.</p>
+</footer>

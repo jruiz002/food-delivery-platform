@@ -29,6 +29,10 @@ export class RestaurantRepository {
     return result as unknown as Restaurant[];
   }
 
+  async countDocuments(filter: any): Promise<number> {
+    return this.restaurantModel.countDocuments(filter).exec();
+  }
+
   async findAllMenuItems(pipeline: any[]): Promise<any[]> {
     return this.restaurantModel.aggregate(pipeline).exec();
   }
