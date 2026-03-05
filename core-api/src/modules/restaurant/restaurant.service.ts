@@ -38,6 +38,7 @@ export class RestaurantService {
   }
 
   async findAllMenuItems(
+    restaurantId: string,
     search?: string,
     status: 'available' | 'unavailable' | 'all' = 'all',
     page: number = 1,
@@ -45,7 +46,10 @@ export class RestaurantService {
     sortBy: string = 'name',
     order: 'asc' | 'desc' = 'asc',
   ): Promise<any[]> {
-    const pipeline: any[] = [{ $unwind: '$menu' }];
+    const pipeline: any[] = [
+      { $match: { _id: new Types.ObjectId(restaurantId) } },
+      { $unwind: '$menu' },
+    ];
 
     // Filter by status
     if (status === 'available') {
