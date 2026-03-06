@@ -143,7 +143,7 @@
             </div>
 
             <!-- Action Button -->
-            <button class="btn-view">
+            <button class="btn-view" [routerLink]="['/restaurants', restaurant._id]">
               <span>{{ isRestaurant() ? 'Manage' : 'View Menu' }}</span>
               <mat-icon>arrow_forward</mat-icon>
             </button>
