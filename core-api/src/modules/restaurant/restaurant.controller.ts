@@ -75,8 +75,9 @@ export class RestaurantController {
     return this.restaurantService.findAll(filter, {}, sort, limitNum, skip);
   }
 
-  @Get('menu')
+  @Get(':id/menu')
   async findMenuItems(
+    @Param('id') id: string,
     @Query('search') search?: string,
     @Query('status') status: 'available' | 'unavailable' | 'all' = 'all',
     @Query('page') page: number = 1,
@@ -85,6 +86,7 @@ export class RestaurantController {
     @Query('order') order: 'asc' | 'desc' = 'asc',
   ) {
     return this.restaurantService.findAllMenuItems(
+      id,
       search,
       status,
       Number(page),
