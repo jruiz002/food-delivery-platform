@@ -33,6 +33,12 @@
 
       <!-- Restaurant info -->
       <div class="restaurant-info">
+        @if (isOwner()) {
+          <button class="btn-edit" (click)="openEditModal()" title="Edit Restaurant">
+            <mat-icon>edit</mat-icon>
+            Edit
+          </button>
+        }
         <div class="restaurant-header">
           <div class="restaurant-title">
             <h1>{{ restaurant()!.name }}</h1>
@@ -193,6 +199,93 @@
       </div>
     }
   </main>
+
+  <!-- Edit Restaurant Modal -->
+  @if (showEditModal()) {
+    <div class="modal-overlay" (click)="closeEditModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>edit</mat-icon>
+            Edit Restaurant
+          </h2>
+          <button class="close-btn" (click)="closeEditModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <form [formGroup]="editRestaurantForm" (ngSubmit)="submitUpdateRestaurant()">
+          <div class="modal-body">
+            @if (updateError()) {
+              <div class="error-message">
+                <mat-icon>error</mat-icon>
+                {{ updateError() }}
+              </div>
+            }
+
+            <div class="form-group">
+              <label for="edit-name">Restaurant Name *</label>
+              <input
+                id="edit-name"
+                type="text"
+                formControlName="name"
+                placeholder="Enter restaurant name"
+                [class.invalid]="isFieldInvalid('name')"
+              />
+              @if (isFieldInvalid('name')) {
+                <span class="error-text">{{ getFieldError('name') }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="edit-description">Description *</label>
+              <textarea
+                id="edit-description"
+                formControlName="description"
+                placeholder="Enter restaurant description"
+                rows="4"
+                [class.invalid]="isFieldInvalid('description')"
+              ></textarea>
+              @if (isFieldInvalid('description')) {
+                <span class="error-text">{{ getFieldError('description') }}</span>
+              }
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" formControlName="isActive" />
+                <span>Active Restaurant</span>
+              </label>
+              <small>Inactive restaurants won't be visible to customers</small>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="closeEditModal()"
+              [disabled]="updatingRestaurant()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="updatingRestaurant() || editRestaurantForm.invalid"
+            >
+              @if (updatingRestaurant()) {
+                <span class="spinner-small"></span>
+                Updating...
+              } @else {
+                Update
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
 
   <!-- Footer -->
   <footer class="footer">
