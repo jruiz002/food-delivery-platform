@@ -225,3 +225,104 @@
   </div>
   <p class="footer-copyright">© 2026 DeliverEats. All rights reserved.</p>
 </footer>
+
+<!-- Create Restaurant Modal -->
+@if (showCreateModal()) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <mat-icon>restaurant</mat-icon>
+          Create New Restaurant
+        </h2>
+        <button class="modal-close" (click)="closeCreateModal()" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="createRestaurantForm" (ngSubmit)="submitCreateRestaurant()" class="modal-form">
+        <!-- Name Field -->
+        <div class="form-group">
+          <label for="name" class="form-label">
+            Restaurant Name <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            formControlName="name"
+            class="form-input"
+            [class.error]="isFieldInvalid('name')"
+            placeholder="Enter restaurant name"
+          />
+          @if (isFieldInvalid('name')) {
+            <span class="form-error">{{ getFieldError('name') }}</span>
+          }
+        </div>
+
+        <!-- Description Field -->
+        <div class="form-group">
+          <label for="description" class="form-label">
+            Description <span class="required">*</span>
+          </label>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-textarea"
+            [class.error]="isFieldInvalid('description')"
+            placeholder="Describe your restaurant (min 10 characters)"
+            rows="4"
+          ></textarea>
+          @if (isFieldInvalid('description')) {
+            <span class="form-error">{{ getFieldError('description') }}</span>
+          }
+        </div>
+
+        <!-- Active Status -->
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              formControlName="isActive"
+              class="form-checkbox"
+            />
+            <span class="checkbox-text">Set as active immediately</span>
+          </label>
+          <p class="form-hint">Active restaurants will be visible to customers</p>
+        </div>
+
+        <!-- Error Message -->
+        @if (createError()) {
+          <div class="alert alert-error">
+            <mat-icon>error</mat-icon>
+            <span>{{ createError() }}</span>
+          </div>
+        }
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="closeCreateModal()"
+            [disabled]="creatingRestaurant()"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="creatingRestaurant() || createRestaurantForm.invalid"
+          >
+            @if (creatingRestaurant()) {
+              <span class="spinner-small"></span>
+              <span>Creating...</span>
+            } @else {
+              <mat-icon>add</mat-icon>
+              <span>Create Restaurant</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
