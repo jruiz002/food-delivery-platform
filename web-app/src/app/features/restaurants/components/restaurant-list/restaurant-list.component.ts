@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
@@ -10,7 +10,7 @@ import { Restaurant, RestaurantFilters } from '../../models/restaurant.model';
 @Component({
   selector: 'app-restaurant-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatIconModule, RouterModule],
   templateUrl: './restaurant-list.component.html',
   styleUrls: ['./restaurant-list.component.css']
 })
@@ -18,12 +18,25 @@ export class RestaurantListComponent implements OnInit {
   private authService = inject(AuthService);
   private restaurantService = inject(RestaurantService);
   private router = inject(Router);
+  private fb = inject(FormBuilder);
 
   // Signals
   currentUser = this.authService.currentUser;
   restaurants = signal<Restaurant[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
+  
+  // Modal signals
+  showCreateModal = signal(false);
+  creatingRestaurant = signal(false);
+  createError = signal<string | null>(null);
+  
+  // Create restaurant form
+  createRestaurantForm = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+    description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
+    isActive: [true]
+  });
   
   // Filtros
   searchTerm = signal('');
@@ -117,14 +130,68 @@ export class RestaurantListComponent implements OnInit {
 
   viewRestaurantDetails(restaurant: Restaurant) {
     // Navegar a detalles del restaurante
-    this.router.navigate(['/restaurant', restaurant._id]);
+    this.router.navigate(['/restaurants', restaurant._id]);
   }
 
   createNewRestaurant() {
     // Solo para restaurantes
     if (this.isRestaurant()) {
-      this.router.navigate(['/restaurant/create']);
+      this.showCreateModal.set(true);
+      this.createError.set(null);
+      this.createRestaurantForm.reset({ isActive: true });
     }
+  }
+
+  closeCreateModal() {
+    this.showCreateModal.set(false);
+    this.createRestaurantForm.reset({ isActive: true });
+    this.createError.set(null);
+  }
+
+  submitCreateRestaurant() {
+    if (this.createRestaurantForm.invalid) {
+      this.createRestaurantForm.markAllAsTouched();
+      return;
+    }
+
+    this.creatingRestaurant.set(true);
+    this.createError.set(null);
+
+    this.restaurantService.create(this.createRestaurantForm.value as any).subscribe({
+      next: (newRestaurant) => {
+        this.creatingRestaurant.set(false);
+        this.closeCreateModal();
+        // Reload the list to show the new restaurant
+        this.loadRestaurants();
+      },
+      error: (err) => {
+        this.creatingRestaurant.set(false);
+        this.createError.set(err.error?.message || 'Failed to create restaurant. Please try again.');
+        console.error('Error creating restaurant:', err);
+      }
+    });
+  }
+
+  // Form field helpers
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.createRestaurantForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.createRestaurantForm.get(fieldName);
+    if (!field || !field.errors) return '';
+
+    if (field.errors['required']) return `${fieldName} is required`;
+    if (field.errors['minlength']) {
+      const minLength = field.errors['minlength'].requiredLength;
+      return `${fieldName} must be at least ${minLength} characters`;
+    }
+    if (field.errors['maxlength']) {
+      const maxLength = field.errors['maxlength'].requiredLength;
+      return `${fieldName} must not exceed ${maxLength} characters`;
+    }
+    return '';
   }
 
   logout() {
