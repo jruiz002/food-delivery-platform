@@ -123,6 +123,15 @@
             @if (!restaurant.isActive) {
               <div class="inactive-badge">Inactive</div>
             }
+            @if (isRestaurant()) {
+              <button 
+                class="btn-delete" 
+                (click)="confirmDeleteRestaurant($event, restaurant)"
+                title="Delete Restaurant"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
           </div>
 
           <!-- Restaurant Info -->
@@ -323,6 +332,65 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal()) {
+  <div class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <mat-icon class="warning-icon">warning</mat-icon>
+          Delete Restaurant
+        </h2>
+        <button class="modal-close" (click)="closeDeleteModal()" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="delete-message">
+          Are you sure you want to delete <strong>{{ selectedRestaurant()?.name }}</strong>?
+        </p>
+        <p class="delete-warning">
+          This action cannot be undone. All menu items and data will be permanently deleted.
+        </p>
+
+        <!-- Error Message -->
+        @if (deleteError()) {
+          <div class="alert alert-error">
+            <mat-icon>error</mat-icon>
+            <span>{{ deleteError() }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="closeDeleteModal()"
+          [disabled]="deletingRestaurant()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-danger"
+          (click)="deleteRestaurant()"
+          [disabled]="deletingRestaurant()"
+        >
+          @if (deletingRestaurant()) {
+            <span class="spinner-small"></span>
+            <span>Deleting...</span>
+          } @else {
+            <mat-icon>delete</mat-icon>
+            <span>Delete</span>
+          }
+        </button>
+      </div>
     </div>
   </div>
 }

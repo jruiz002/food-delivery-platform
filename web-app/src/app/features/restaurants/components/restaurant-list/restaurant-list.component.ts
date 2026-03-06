@@ -31,6 +31,12 @@ export class RestaurantListComponent implements OnInit {
   creatingRestaurant = signal(false);
   createError = signal<string | null>(null);
   
+  // Delete modal signals
+  showDeleteModal = signal(false);
+  deletingRestaurant = signal(false);
+  deleteError = signal<string | null>(null);
+  selectedRestaurant = signal<Restaurant | null>(null);
+  
   // Create restaurant form
   createRestaurantForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
@@ -192,6 +198,42 @@ export class RestaurantListComponent implements OnInit {
       return `${fieldName} must not exceed ${maxLength} characters`;
     }
     return '';
+  }
+
+  // Delete restaurant methods
+  confirmDeleteRestaurant(event: Event, restaurant: Restaurant) {
+    event.stopPropagation(); // Evitar que se active el click del card
+    this.selectedRestaurant.set(restaurant);
+    this.showDeleteModal.set(true);
+    this.deleteError.set(null);
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal.set(false);
+    this.selectedRestaurant.set(null);
+    this.deleteError.set(null);
+  }
+
+  deleteRestaurant() {
+    const restaurant = this.selectedRestaurant();
+    if (!restaurant) return;
+
+    this.deletingRestaurant.set(true);
+    this.deleteError.set(null);
+
+    this.restaurantService.delete(restaurant._id).subscribe({
+      next: () => {
+        this.deletingRestaurant.set(false);
+        this.closeDeleteModal();
+        // Reload the list
+        this.loadRestaurants();
+      },
+      error: (err) => {
+        this.deletingRestaurant.set(false);
+        this.deleteError.set(err.error?.message || 'Failed to delete restaurant. Please try again.');
+        console.error('Error deleting restaurant:', err);
+      }
+    });
   }
 
   logout() {
