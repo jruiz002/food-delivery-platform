@@ -40,10 +40,10 @@ export class RestaurantService {
   }
 
   /**
-   * GET /restaurant/menu
-   * Buscar items del menú de todos los restaurantes
+   * GET /restaurant/:id/menu
+   * Buscar items del menú de un restaurante específico
    */
-  getAllMenuItems(filters?: MenuFilters): Observable<any> {
+  getAllMenuItems(restaurantId: string, filters?: MenuFilters): Observable<any> {
     let params = new HttpParams();
     
     if (filters) {
@@ -55,7 +55,7 @@ export class RestaurantService {
       if (filters.order) params = params.set('order', filters.order);
     }
 
-    return this.http.get<any>(`${this.apiUrl}/menu`, { params });
+    return this.http.get<any>(`${this.apiUrl}/${restaurantId}/menu`, { params });
   }
 
   /**

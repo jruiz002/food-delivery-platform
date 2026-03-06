@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
 import { RestaurantService } from '../../services/restaurant.service';
@@ -10,7 +10,7 @@ import { Restaurant, RestaurantFilters } from '../../models/restaurant.model';
 @Component({
   selector: 'app-restaurant-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, RouterModule],
   templateUrl: './restaurant-list.component.html',
   styleUrls: ['./restaurant-list.component.css']
 })

@@ -1,0 +1,201 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <mat-icon>restaurant</mat-icon>
+        <span>Food Delivery</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="main-content">
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading restaurant...</p>
+      </div>
+    } @else if (error()) {
+      <div class="error-container">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error() }}</p>
+        <button class="btn-primary" (click)="goBack()">Go Back</button>
+      </div>
+    } @else if (restaurant()) {
+      <!-- Back button -->
+      <div class="back-button-container">
+        <button class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Restaurants
+        </button>
+      </div>
+
+      <!-- Restaurant info -->
+      <div class="restaurant-info">
+        <div class="restaurant-header">
+          <div class="restaurant-title">
+            <h1>{{ restaurant()!.name }}</h1>
+            <span class="status-badge" [class.active]="restaurant()!.isActive">
+              <mat-icon>{{ restaurant()!.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+              {{ restaurant()!.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+          <p class="restaurant-description">{{ restaurant()!.description }}</p>
+          <div class="restaurant-meta">
+            <span class="meta-item">
+              <mat-icon>calendar_today</mat-icon>
+              Created: {{ formatDate(restaurant()!.createdAt) }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>update</mat-icon>
+              Updated: {{ formatDate(restaurant()!.updatedAt) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menu section -->
+      <div class="menu-section">
+        <div class="menu-header">
+          <h2>
+            <mat-icon>restaurant_menu</mat-icon>
+            Menu Items
+          </h2>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+          <div class="filter-group">
+            <div class="search-box">
+              <mat-icon>search</mat-icon>
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="onSearchChange()"
+              />
+            </div>
+
+            <select
+              class="filter-select"
+              [(ngModel)]="statusFilter"
+              (ngModelChange)="onStatusChange()"
+            >
+              <option value="all">All Items</option>
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </div>
+
+          <div class="sort-group">
+            <button
+              class="sort-btn"
+              [class.active]="sortBy() === 'name'"
+              (click)="onSortChange('name')"
+            >
+              Name
+              @if (sortBy() === 'name') {
+                <mat-icon>{{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              }
+            </button>
+            <button
+              class="sort-btn"
+              [class.active]="sortBy() === 'price'"
+              (click)="onSortChange('price')"
+            >
+              Price
+              @if (sortBy() === 'price') {
+                <mat-icon>{{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- Menu items grid -->
+        @if (loadingMenu()) {
+          <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Loading menu items...</p>
+          </div>
+        } @else if (menuItems().length === 0) {
+          <div class="empty-state">
+            <mat-icon>menu_book</mat-icon>
+            <p>No menu items found</p>
+            @if (searchTerm() || statusFilter() !== 'all') {
+              <button class="btn-secondary" (click)="searchTerm.set(''); statusFilter.set('all'); onSearchChange()">
+                Clear Filters
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="menu-grid">
+            @for (item of menuItems(); track item._id) {
+              <div class="menu-card" [class.unavailable]="!item.available">
+                <div class="menu-card-header">
+                  <h3>{{ item.name }}</h3>
+                  <span class="price">{{ formatPrice(item.price) }}</span>
+                </div>
+                
+                @if (item.description) {
+                  <p class="menu-description">{{ item.description }}</p>
+                }
+                
+                @if (item.tags && item.tags.length > 0) {
+                  <div class="tags">
+                    @for (tag of item.tags; track tag) {
+                      <span class="tag">{{ tag }}</span>
+                    }
+                  </div>
+                }
+                
+                <div class="menu-card-footer">
+                  <span class="availability" [class.available]="item.available">
+                    <mat-icon>{{ item.available ? 'check_circle' : 'cancel' }}</mat-icon>
+                    {{ item.available ? 'Available' : 'Unavailable' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <div class="pagination">
+              <button
+                class="pagination-btn"
+                [disabled]="currentPage() === 1"
+                (click)="onPageChange(currentPage() - 1)"
+              >
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+
+              @for (page of getPageNumbers(); track page) {
+                <button
+                  class="pagination-btn page-number"
+                  [class.active]="page === currentPage()"
+                  (click)="onPageChange(page)"
+                >
+                  {{ page }}
+                </button>
+              }
+
+              <button
+                class="pagination-btn"
+                [disabled]="currentPage() === totalPages()"
+                (click)="onPageChange(currentPage() + 1)"
+              >
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          }
+        }
+      </div>
+    }
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Food Delivery Platform. All rights reserved.</p>
+  </footer>
+</div>

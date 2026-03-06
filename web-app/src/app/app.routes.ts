@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/components/login/login.component';
 import { RegisterComponent } from './features/auth/components/register/register.component';
 import { RestaurantListComponent } from '@features/restaurants/components/restaurant-list/restaurant-list.component';
+import { RestaurantDetailComponent } from '@features/restaurants/components/restaurant-detail/restaurant-detail.component';
 
 export const routes: Routes = [
   {
@@ -16,6 +17,10 @@ export const routes: Routes = [
   {
     path: 'restaurants',
     component: RestaurantListComponent
+  },
+  {
+    path: 'restaurants/:id',
+    component: RestaurantDetailComponent
   },
   {
     path: 'register',
