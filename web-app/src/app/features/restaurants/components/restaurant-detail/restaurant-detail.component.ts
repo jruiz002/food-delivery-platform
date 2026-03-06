@@ -36,6 +36,23 @@ export class RestaurantDetailComponent implements OnInit {
     isActive: [true]
   });
   
+  // Menu management modal signals
+  showMenuModal = signal(false);
+  updatingMenu = signal(false);
+  menuError = signal<string | null>(null);
+  editingMenuItems = signal<any[]>([]);
+  showAddItemForm = signal(false);
+  editingItemIndex = signal<number | null>(null);
+  
+  // Menu item form
+  menuItemForm = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+    price: [0, [Validators.required, Validators.min(0)]],
+    description: ['', Validators.maxLength(500)],
+    tags: [''],
+    available: [true]
+  });
+  
   // Current user
   currentUser = this.authService.currentUser;
   
@@ -223,13 +240,15 @@ export class RestaurantDetailComponent implements OnInit {
   }
 
   // Form field helpers
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.editRestaurantForm.get(fieldName);
+  isFieldInvalid(fieldName: string, formType: 'restaurant' | 'menuItem' = 'restaurant'): boolean {
+    const form = formType === 'restaurant' ? this.editRestaurantForm : this.menuItemForm;
+    const field = (form as any).get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
-  getFieldError(fieldName: string): string {
-    const field = this.editRestaurantForm.get(fieldName);
+  getFieldError(fieldName: string, formType: 'restaurant' | 'menuItem' = 'restaurant'): string {
+    const form = formType === 'restaurant' ? this.editRestaurantForm : this.menuItemForm;
+    const field = (form as any).get(fieldName);
     if (!field || !field.errors) return '';
 
     if (field.errors['required']) return `${fieldName} is required`;
@@ -241,7 +260,124 @@ export class RestaurantDetailComponent implements OnInit {
       const maxLength = field.errors['maxlength'].requiredLength;
       return `${fieldName} must not exceed ${maxLength} characters`;
     }
+    if (field.errors['min']) {
+      return `${fieldName} must be greater than or equal to ${field.errors['min'].min}`;
+    }
     return '';
+  }
+
+  // Menu management methods
+  openMenuModal() {
+    const rest = this.restaurant();
+    if (rest) {
+      // Clone the menu to work with
+      this.editingMenuItems.set(JSON.parse(JSON.stringify(rest.menu)));
+      this.showMenuModal.set(true);
+      this.menuError.set(null);
+      this.showAddItemForm.set(false);
+      this.editingItemIndex.set(null);
+    }
+  }
+
+  closeMenuModal() {
+    this.showMenuModal.set(false);
+    this.editingMenuItems.set([]);
+    this.menuError.set(null);
+    this.showAddItemForm.set(false);
+    this.editingItemIndex.set(null);
+    this.menuItemForm.reset({ available: true });
+  }
+
+  openAddItemForm() {
+    this.showAddItemForm.set(true);
+    this.editingItemIndex.set(null);
+    this.menuItemForm.reset({ price: 0, available: true });
+  }
+
+  cancelItemForm() {
+    this.showAddItemForm.set(false);
+    this.editingItemIndex.set(null);
+    this.menuItemForm.reset({ available: true });
+  }
+
+  openEditItemForm(index: number) {
+    const item = this.editingMenuItems()[index];
+    this.editingItemIndex.set(index);
+    this.showAddItemForm.set(true);
+    this.menuItemForm.patchValue({
+      name: item.name,
+      price: item.price,
+      description: item.description || '',
+      tags: item.tags?.join(', ') || '',
+      available: item.available
+    });
+  }
+
+  saveMenuItem() {
+    if (this.menuItemForm.invalid) {
+      this.menuItemForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.menuItemForm.value;
+    const menuItem = {
+      _id: this.editingItemIndex() !== null ? this.editingMenuItems()[this.editingItemIndex()!]._id : new Date().getTime().toString(),
+      name: formValue.name!,
+      price: formValue.price!,
+      description: formValue.description || '',
+      tags: formValue.tags ? formValue.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t) : [],
+      available: formValue.available!
+    };
+
+    const currentItems = [...this.editingMenuItems()];
+    
+    if (this.editingItemIndex() !== null) {
+      // Edit existing item
+      currentItems[this.editingItemIndex()!] = menuItem;
+    } else {
+      // Add new item
+      currentItems.push(menuItem);
+    }
+
+    this.editingMenuItems.set(currentItems);
+    this.cancelItemForm();
+  }
+
+  deleteMenuItem(index: number) {
+    const currentItems = [...this.editingMenuItems()];
+    currentItems.splice(index, 1);
+    this.editingMenuItems.set(currentItems);
+  }
+
+  saveMenu() {
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) return;
+
+    this.updatingMenu.set(true);
+    this.menuError.set(null);
+
+    // Remove _id from items as it might cause issues with new items
+    const menuToSend = this.editingMenuItems().map(item => ({
+      name: item.name,
+      price: item.price,
+      description: item.description,
+      tags: item.tags,
+      available: item.available
+    }));
+
+    this.restaurantService.updateMenu(restaurantId, menuToSend).subscribe({
+      next: (updatedRestaurant) => {
+        this.restaurant.set(updatedRestaurant);
+        this.updatingMenu.set(false);
+        this.closeMenuModal();
+        this.loadMenuItems(); // Reload the menu display
+      },
+      error: (err) => {
+        this.updatingMenu.set(false);
+        this.menuError.set(err.error?.message || 'Failed to update menu. Please try again.');
+        console.error('Error updating menu:', err);
+      }
+    });
   }
 
   // Format helpers
