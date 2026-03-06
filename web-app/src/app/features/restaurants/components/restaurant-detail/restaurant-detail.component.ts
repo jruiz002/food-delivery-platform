@@ -1,15 +1,16 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RestaurantService } from '../../services/restaurant.service';
 import { Restaurant, MenuFilters } from '../../models/restaurant.model';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-restaurant-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './restaurant-detail.component.html',
   styleUrl: './restaurant-detail.component.css'
 })
@@ -17,9 +18,33 @@ export class RestaurantDetailComponent implements OnInit {
   private restaurantService = inject(RestaurantService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
 
   // Restaurant data
   restaurant = signal<Restaurant | null>(null);
+  
+  // Edit modal signals
+  showEditModal = signal(false);
+  updatingRestaurant = signal(false);
+  updateError = signal<string | null>(null);
+  
+  // Edit restaurant form
+  editRestaurantForm = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+    description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
+    isActive: [true]
+  });
+  
+  // Current user
+  currentUser = this.authService.currentUser;
+  
+  // Computed: check if current user is the owner
+  isOwner = computed(() => {
+    const user = this.currentUser();
+    const rest = this.restaurant();
+    return user && rest && user._id === rest.owner_id;
+  });
   
   // Menu items data
   menuItems = signal<any[]>([]);
@@ -149,6 +174,74 @@ export class RestaurantDetailComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/restaurants']);
+  }
+
+  // Edit restaurant methods
+  openEditModal() {
+    const rest = this.restaurant();
+    if (rest) {
+      this.editRestaurantForm.patchValue({
+        name: rest.name,
+        description: rest.description,
+        isActive: rest.isActive
+      });
+      this.showEditModal.set(true);
+      this.updateError.set(null);
+    }
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+    this.editRestaurantForm.reset();
+    this.updateError.set(null);
+  }
+
+  submitUpdateRestaurant() {
+    if (this.editRestaurantForm.invalid) {
+      this.editRestaurantForm.markAllAsTouched();
+      return;
+    }
+
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) return;
+
+    this.updatingRestaurant.set(true);
+    this.updateError.set(null);
+
+    this.restaurantService.update(restaurantId, this.editRestaurantForm.value as any).subscribe({
+      next: (updatedRestaurant) => {
+        this.restaurant.set(updatedRestaurant);
+        this.updatingRestaurant.set(false);
+        this.closeEditModal();
+      },
+      error: (err) => {
+        this.updatingRestaurant.set(false);
+        this.updateError.set(err.error?.message || 'Failed to update restaurant. Please try again.');
+        console.error('Error updating restaurant:', err);
+      }
+    });
+  }
+
+  // Form field helpers
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.editRestaurantForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.editRestaurantForm.get(fieldName);
+    if (!field || !field.errors) return '';
+
+    if (field.errors['required']) return `${fieldName} is required`;
+    if (field.errors['minlength']) {
+      const minLength = field.errors['minlength'].requiredLength;
+      return `${fieldName} must be at least ${minLength} characters`;
+    }
+    if (field.errors['maxlength']) {
+      const maxLength = field.errors['maxlength'].requiredLength;
+      return `${fieldName} must not exceed ${maxLength} characters`;
+    }
+    return '';
   }
 
   // Format helpers
