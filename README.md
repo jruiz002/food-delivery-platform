@@ -4,9 +4,33 @@ Bienvenido al proyecto de **Food Delivery Platform**, una solución integral par
 
 El sistema permite la gestión de usuarios (consumidores y dueños de restaurantes), administración de menús, realización de pedidos, y un sistema de reseñas para asegurar la calidad del servicio.
 
-## 💻 Frontend
+## 💻 Frontend (Web App)
 
-🚧 **Próximamente...** 🚧
+El frontend de la plataforma está desarrollado utilizando **Angular** (v20) y **Angular Material**, ofreciendo una interfaz de usuario moderna, reactiva y optimizada tanto para consumidores como para administradores de restaurantes.
+
+### Tecnologías Principales
+- **Framework:** Angular v20
+- **UI Components:** Angular Material
+- **Estilos:** SCSS
+- **Ubicación:** `web-app/`
+
+### Instalación y Ejecución
+
+1. Navega al directorio del frontend:
+   ```bash
+   cd web-app
+   ```
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+3. Ejecuta el servidor de desarrollo:
+   ```bash
+   npm start
+   ```
+   O utiliza el comando de Angular CLI: `ng serve`
+
+4. Abre tu navegador en `http://localhost:4200/`. La aplicación se recargará automáticamente si realizas cambios en el código fuente.
 
 ## 🚀 Backend (Core API)
 
