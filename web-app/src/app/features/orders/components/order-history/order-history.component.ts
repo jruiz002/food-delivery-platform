@@ -72,7 +72,7 @@ export class OrderHistoryComponent implements OnInit {
     const userId = this.currentUser()?._id;
     if (!userId) return;
 
-    this.reviewsService.getAll({ limit: 500 }).subscribe({
+    this.reviewsService.getAll({ limit: 10000 }).subscribe({
       next: (reviews) => {
         const map = new Map<string, Review>();
         reviews

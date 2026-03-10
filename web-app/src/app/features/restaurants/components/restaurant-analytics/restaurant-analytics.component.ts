@@ -64,7 +64,7 @@ export class RestaurantAnalyticsComponent implements OnInit {
     });
 
     // Load reviews and filter client-side by restaurant_id
-    this.reviewsService.getAll({ limit: 500 }).subscribe({
+    this.reviewsService.getAll({ limit: 10000 }).subscribe({
       next: (reviews) => {
         this.reviewsError.set(null);
         // Usamos String() para manejar cualquier tipo de serialización (ObjectId o string)
