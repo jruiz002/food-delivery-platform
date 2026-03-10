@@ -7,7 +7,9 @@ import {
   CreateOrderDto,
   UpdateOrderStatusDto,
   OrderHistoryFilters,
-  RestaurantAnalytics
+  RestaurantAnalytics,
+  RestaurantOrderFilters,
+  RestaurantOrderItem
 } from '../models/order.model';
 
 @Injectable({
@@ -49,6 +51,24 @@ export class OrdersService {
    */
   getRestaurantAnalytics(restaurantId: string): Observable<RestaurantAnalytics> {
     return this.http.get<RestaurantAnalytics>(`${this.apiUrl}/restaurant/${restaurantId}/analytics`);
+  }
+
+  /**
+   * GET /orders/restaurant/:restaurantId/orders
+   * Obtener pedidos entrantes de un restaurante (requiere role 'restaurant')
+   */
+  getRestaurantOrders(restaurantId: string, filters?: RestaurantOrderFilters): Observable<RestaurantOrderItem[]> {
+    let params = new HttpParams();
+
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.limit) params = params.set('limit', filters.limit.toString());
+      if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+      if (filters.sortOrder) params = params.set('sortOrder', filters.sortOrder);
+      if (filters.status) params = params.set('status', filters.status);
+    }
+
+    return this.http.get<RestaurantOrderItem[]>(`${this.apiUrl}/restaurant/${restaurantId}/orders`, { params });
   }
 
   /**

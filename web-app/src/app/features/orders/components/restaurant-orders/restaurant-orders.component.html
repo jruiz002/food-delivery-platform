@@ -1,0 +1,152 @@
+<div class="page-container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <mat-icon>restaurant</mat-icon>
+        <span>Food Delivery</span>
+      </div>
+      <nav class="header-nav">
+        <button class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Mi Restaurante
+        </button>
+        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <mat-icon>list_alt</mat-icon>
+        <div>
+          <h1>Pedidos Entrantes</h1>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>Estado</label>
+          <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value); applyFilters()">
+            <option value="">Todos</option>
+            <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Ordenar por</label>
+          <select [value]="sortBy()" (change)="sortBy.set($any($event.target).value); applyFilters()">
+            <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Orden</label>
+          <select [value]="sortOrder()" (change)="sortOrder.set($any($event.target).value); applyFilters()">
+            <option value="desc">Más reciente</option>
+            <option value="asc">Más antiguo</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Por página</label>
+          <select [value]="limit()" (change)="limit.set(+$any($event.target).value); applyFilters()">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Update error -->
+      <div class="error-banner" *ngIf="updateError()">
+        {{ updateError() }}
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-container" *ngIf="loading()">
+        <div class="spinner"></div>
+        <p>Cargando pedidos...</p>
+      </div>
+
+      <!-- Error -->
+      <div class="error-container" *ngIf="!loading() && error()">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error() }}</p>
+        <button class="btn-primary" (click)="loadOrders()">Reintentar</button>
+      </div>
+
+      <!-- Empty -->
+      <div class="empty-state" *ngIf="!loading() && !error() && orders().length === 0">
+        <p>No hay pedidos con los filtros seleccionados.</p>
+      </div>
+
+      <!-- Orders list -->
+      <div class="orders-list" *ngIf="!loading() && !error() && orders().length > 0">
+        <div class="order-card" *ngFor="let order of orders()">
+
+          <div class="order-header">
+            <div class="order-meta">
+              <span class="order-id">Pedido #{{ order._id.slice(-6).toUpperCase() }}</span>
+              <span [class]="'status-badge ' + getStatusClass(order.status)">
+                {{ statusLabels[order.status] }}
+              </span>
+            </div>
+            <div class="order-date">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+
+          <div class="consumer-info" *ngIf="order.consumer">
+            <mat-icon>person</mat-icon>
+            <span>{{ order.consumer.name }} &bull; {{ order.consumer.email }}</span>
+          </div>
+
+          <div class="order-items">
+            <div class="order-item" *ngFor="let item of order.items">
+              <span class="item-qty">{{ item.quantity }}x</span>
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-price">${{ formatAmount(item.price).toFixed(2) }}</span>
+            </div>
+          </div>
+
+          <div class="order-footer">
+            <span class="order-total">Total: <strong>${{ formatAmount(order.totalAmount).toFixed(2) }}</strong></span>
+
+            <div class="status-actions" *ngIf="nextStatuses(order.status).length > 0">
+              <span class="action-label">Cambiar a:</span>
+              <button
+                *ngFor="let next of nextStatuses(order.status)"
+                [class]="'btn-status btn-status-' + next.toLowerCase()"
+                [disabled]="updatingOrderId() === order._id"
+                (click)="changeStatus(order, next)"
+              >
+                <span *ngIf="updatingOrderId() === order._id" class="btn-spinner"></span>
+                {{ statusLabels[next] }}
+              </button>
+            </div>
+
+            <span class="final-status" *ngIf="nextStatuses(order.status).length === 0">
+              Estado final
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="!loading() && !error()">
+        <button class="btn-page" [disabled]="page() === 1" (click)="prevPage()">
+          <mat-icon>chevron_left</mat-icon> Anterior
+        </button>
+        <span class="page-info">Página {{ page() }}</span>
+        <button class="btn-page" [disabled]="orders().length < limit()" (click)="nextPage()">
+          Siguiente <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+  </main>
+</div>

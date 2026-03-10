@@ -1,0 +1,136 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <mat-icon>restaurant</mat-icon>
+        <span>Food Delivery</span>
+      </div>
+      <nav class="header-nav">
+        <a routerLink="/restaurants" class="nav-link">
+          <mat-icon>storefront</mat-icon>
+          Restaurantes
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Cargando analíticas...</p>
+      </div>
+    } @else if (error()) {
+      <div class="error-container">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error() }}</p>
+        <button class="btn-back" (click)="goBack()">Volver</button>
+      </div>
+    } @else {
+      <!-- Back button -->
+      <div class="back-button-container">
+        <button class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver al Restaurante
+        </button>
+      </div>
+
+      <!-- Page title -->
+      <div class="page-header">
+        <mat-icon>bar_chart</mat-icon>
+        <div>
+          <h1>Analytics</h1>
+          <p>{{ restaurantName() }}</p>
+        </div>
+      </div>
+
+      @if (analytics()) {
+        <!-- Metrics Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <mat-icon>receipt_long</mat-icon>
+            <div class="metric-value">{{ analytics().metrics.totalOrders }}</div>
+            <div class="metric-label">Total Pedidos</div>
+          </div>
+          <div class="metric-card">
+            <mat-icon>group</mat-icon>
+            <div class="metric-value">{{ analytics().metrics.uniqueCustomers }}</div>
+            <div class="metric-label">Clientes Únicos</div>
+          </div>
+          <div class="metric-card">
+            <mat-icon>star</mat-icon>
+            <div class="metric-value">{{ getAverageRating() | number:'1.1-1' }}</div>
+            <div class="metric-label">Calificación Media</div>
+          </div>
+          <div class="metric-card">
+            <mat-icon>rate_review</mat-icon>
+            <div class="metric-value">{{ reviews().length }}</div>
+            <div class="metric-label">Total Reseñas</div>
+          </div>
+        </div>
+
+        <!-- Top Dishes -->
+        @if (analytics().topDishes && analytics().topDishes.length > 0) {
+          <div class="section-card">
+            <div class="section-header">
+              <mat-icon>emoji_events</mat-icon>
+              <h2>Top Platillos</h2>
+            </div>
+            <div class="top-dishes-list">
+              @for (dish of analytics().topDishes; track dish._id; let i = $index) {
+                <div class="dish-row">
+                  <span class="dish-rank" [class.top-three]="i < 3">#{{ i + 1 }}</span>
+                  <span class="dish-name">{{ dish.name }}</span>
+                  <span class="dish-count">{{ dish.totalQuantity }} pedidos</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Reviews Section -->
+      <div class="section-card">
+        <div class="section-header">
+          <mat-icon>star_rate</mat-icon>
+          <h2>Reseñas de Clientes</h2>
+        </div>
+
+        @if (reviewsError()) {
+          <div class="empty-reviews">
+            <mat-icon>error_outline</mat-icon>
+            <p>{{ reviewsError() }}</p>
+          </div>
+        } @else if (reviews().length === 0) {
+          <div class="empty-reviews">
+            <mat-icon>rate_review</mat-icon>
+            <p>Aún no hay reseñas para este restaurante.</p>
+          </div>
+        } @else {
+          <div class="reviews-list">
+            @for (review of reviews(); track review._id) {
+              <div class="review-card">
+                <div class="review-header">
+                  <div class="stars">
+                    @for (star of getStars(review.rating); track star) {
+                      <mat-icon [class.filled]="star <= review.rating">
+                        {{ star <= review.rating ? 'star' : 'star_border' }}
+                      </mat-icon>
+                    }
+                  </div>
+                  <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+                </div>
+                @if (review.comment) {
+                  <p class="review-comment">{{ review.comment }}</p>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

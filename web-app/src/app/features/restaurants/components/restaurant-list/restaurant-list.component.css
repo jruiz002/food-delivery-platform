@@ -997,3 +997,30 @@
     justify-content: center;
   }
 }
+
+/* Nav link in header */
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  color: #555;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid #ddd;
+}
+
+.btn-nav:hover {
+  background-color: #fff4e8;
+  color: #ee8c2b;
+  border-color: #ee8c2b;
+}
+
+.btn-nav mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}

@@ -108,6 +108,33 @@ export class OrdersService {
     };
   }
 
+  async getRestaurantOrders(
+    restaurantId: string,
+    userId: string,
+    query: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      status?: string;
+    } = {},
+  ) {
+    const restaurant = await this.restaurantService.findOne(restaurantId);
+    if (!restaurant) {
+      throw new NotFoundException(
+        `Restaurant with ID ${restaurantId} not found`,
+      );
+    }
+
+    if (restaurant.owner_id.toString() !== userId) {
+      throw new ForbiddenException(
+        'You are not the owner of this restaurant.',
+      );
+    }
+
+    return this.ordersRepository.findByRestaurantId(restaurantId, query);
+  }
+
   async updateStatus(
     orderId: string,
     status: string,

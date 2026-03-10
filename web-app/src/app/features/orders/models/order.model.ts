@@ -37,6 +37,27 @@ export interface OrderHistoryFilters {
   restaurant_id?: string;
 }
 
+export interface RestaurantOrderFilters {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  status?: string;
+}
+
+export interface RestaurantOrderItem {
+  _id: string;
+  totalAmount: number;
+  status: 'Pending' | 'Preparing' | 'Delivered' | 'Cancelled';
+  items: OrderItem[];
+  createdAt: Date;
+  consumer: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export interface RestaurantAnalytics {
   totalOrders: number;
   totalRevenue: number;

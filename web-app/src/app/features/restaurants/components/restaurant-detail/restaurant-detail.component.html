@@ -6,6 +6,24 @@
         <mat-icon>restaurant</mat-icon>
         <span>Food Delivery</span>
       </div>
+      <nav class="header-nav">
+        @if (isConsumer()) {
+          <a routerLink="/orders/history" class="nav-link">
+            <mat-icon>receipt_long</mat-icon>
+            Mis Pedidos
+          </a>
+        }
+        @if (isOwner()) {
+          <a [routerLink]="['/restaurants', restaurantId(), 'analytics']" class="nav-link">
+            <mat-icon>bar_chart</mat-icon>
+            Analytics
+          </a>
+          <a [routerLink]="['/restaurants', restaurantId(), 'orders']" class="nav-link">
+            <mat-icon>list_alt</mat-icon>
+            Pedidos
+          </a>
+        }
+      </nav>
     </div>
   </header>
 
@@ -165,6 +183,12 @@
                     <mat-icon>{{ item.available ? 'check_circle' : 'cancel' }}</mat-icon>
                     {{ item.available ? 'Available' : 'Unavailable' }}
                   </span>
+                  @if (isConsumer() && item.available) {
+                    <button class="btn-order" (click)="openOrderModal(item)">
+                      <mat-icon>add_shopping_cart</mat-icon>
+                      Ordenar
+                    </button>
+                  }
                 </div>
               </div>
             }
@@ -491,6 +515,78 @@
             }
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Order Modal -->
+  @if (showOrderModal()) {
+    <div class="modal-overlay" (click)="closeOrderModal()">
+      <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>add_shopping_cart</mat-icon>
+            Realizar Pedido
+          </h2>
+          <button class="close-btn" (click)="closeOrderModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          @if (orderSuccess()) {
+            <div class="success-message">
+              <mat-icon>check_circle</mat-icon>
+              {{ orderSuccess() }}
+            </div>
+          } @else {
+            @if (orderError()) {
+              <div class="error-message">
+                <mat-icon>error</mat-icon>
+                {{ orderError() }}
+              </div>
+            }
+
+            <div class="order-item-info">
+              <h3>{{ orderingItem()?.name }}</h3>
+              <span class="price">{{ formatPrice(orderingItem()?.price) }}</span>
+            </div>
+
+            <div class="quantity-selector">
+              <label>Cantidad</label>
+              <div class="quantity-controls">
+                <button class="qty-btn" (click)="decreaseQuantity()" [disabled]="orderQuantity() === 1">
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="qty-value">{{ orderQuantity() }}</span>
+                <button class="qty-btn" (click)="increaseQuantity()">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="order-total">
+              <span>Total</span>
+              <strong>{{ formatPrice((orderingItem()?.price || 0) * orderQuantity()) }}</strong>
+            </div>
+          }
+        </div>
+
+        @if (!orderSuccess()) {
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeOrderModal()" [disabled]="placingOrder()">
+              Cancelar
+            </button>
+            <button type="button" class="btn-primary" (click)="placeOrder()" [disabled]="placingOrder()">
+              @if (placingOrder()) {
+                <span class="spinner-small"></span>
+                Procesando...
+              } @else {
+                Confirmar Pedido
+              }
+            </button>
+          </div>
+        }
       </div>
     </div>
   }

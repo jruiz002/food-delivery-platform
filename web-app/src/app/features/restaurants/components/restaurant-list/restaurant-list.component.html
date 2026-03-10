@@ -8,6 +8,12 @@
   </div>
   <div class="header-actions">
     @if (currentUser()) {
+      @if (!isRestaurant()) {
+        <a routerLink="/orders/history" class="btn-nav">
+          <mat-icon>receipt_long</mat-icon>
+          <span>Mis Pedidos</span>
+        </a>
+      }
       <div class="user-info">
         <mat-icon class="user-icon">account_circle</mat-icon>
         <span class="user-name">{{ currentUser()?.name }}</span>

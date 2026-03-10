@@ -79,6 +79,36 @@ export class OrdersController {
     return this.ordersService.getRestaurantAnalytics(restaurantId);
   }
 
+  @Get('restaurant/:restaurantId/orders')
+  @UseGuards(JwtAuthGuard)
+  async getRestaurantOrders(
+    @Param('restaurantId') restaurantId: string,
+    @GetUser('sub') userId: string,
+    @GetUser('role') role: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('status') status?: string,
+  ) {
+    if (role !== 'restaurant') {
+      throw new ForbiddenException(
+        'Solo los usuarios restaurante pueden ver sus pedidos entrantes.',
+      );
+    }
+
+    const parsedPage = page ? parseInt(page, 10) : 1;
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+
+    return this.ordersService.getRestaurantOrders(restaurantId, userId, {
+      page: parsedPage,
+      limit: parsedLimit,
+      sortBy,
+      sortOrder,
+      status,
+    });
+  }
+
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard)
   async updateStatus(

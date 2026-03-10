@@ -84,8 +84,8 @@ export class OrdersRepository {
   async userHasOrdered(userId: string, restaurantId: string): Promise<boolean> {
     const count = await this.orderModel
       .countDocuments({
-        user_id: userId,
-        restaurant_id: restaurantId,
+        user_id: new Types.ObjectId(userId),
+        restaurant_id: new Types.ObjectId(restaurantId),
         status: { $ne: 'Cancelled' },
       })
       .exec();
@@ -119,6 +119,65 @@ export class OrdersRepository {
         { status, deliveredAt: status === 'Delivered' ? new Date() : null },
         { new: true },
       )
+      .exec();
+  }
+
+  async findByRestaurantId(
+    restaurantId: string,
+    query: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      status?: string;
+    } = {},
+  ): Promise<any[]> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      status,
+    } = query;
+
+    const skip = (page - 1) * limit;
+    const matchStage: any = { restaurant_id: new Types.ObjectId(restaurantId) };
+
+    if (status) {
+      matchStage.status = status;
+    }
+
+    const sortStage: any = {};
+    sortStage[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    return this.orderModel
+      .aggregate([
+        { $match: matchStage },
+        { $sort: sortStage },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user_id',
+            foreignField: '_id',
+            as: 'consumerData',
+          },
+        },
+        { $unwind: { path: '$consumerData', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 1,
+            totalAmount: 1,
+            status: 1,
+            items: 1,
+            createdAt: 1,
+            'consumer._id': '$consumerData._id',
+            'consumer.name': '$consumerData.name',
+            'consumer.email': '$consumerData.email',
+          },
+        },
+      ])
       .exec();
   }
 

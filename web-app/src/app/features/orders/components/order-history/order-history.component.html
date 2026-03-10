@@ -1,0 +1,212 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <mat-icon>restaurant</mat-icon>
+        <span>Food Delivery</span>
+      </div>
+      <nav class="header-nav">
+        <a routerLink="/restaurants" class="nav-link">
+          <mat-icon>storefront</mat-icon>
+          Restaurantes
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>
+        <mat-icon>receipt_long</mat-icon>
+        Mi Historial de Pedidos
+      </h1>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Cargando pedidos...</p>
+      </div>
+    } @else if (error()) {
+      <div class="error-container">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error() }}</p>
+        <button class="btn-primary" (click)="loadHistory()">Reintentar</button>
+      </div>
+    } @else if (orders().length === 0) {
+      <div class="empty-state">
+        <mat-icon>receipt_long</mat-icon>
+        <p>Aún no tienes pedidos.</p>
+        <a routerLink="/restaurants" class="btn-primary">Ver Restaurantes</a>
+      </div>
+    } @else {
+      <div class="orders-list">
+        @for (order of orders(); track order._id) {
+          <div class="order-card">
+            <div class="order-header">
+              <div class="restaurant-info">
+                <mat-icon>storefront</mat-icon>
+                <span class="restaurant-name">{{ order.restaurant?.name || 'Restaurante' }}</span>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                <mat-icon>{{ getStatusIcon(order.status) }}</mat-icon>
+                {{ order.status }}
+              </span>
+            </div>
+
+            <div class="order-items">
+              @for (item of order.items; track item.menu_item_id) {
+                <div class="order-item">
+                  <span class="item-qty">{{ item.quantity }}x</span>
+                  <span class="item-name">{{ item.name }}</span>
+                  <span class="item-price">{{ formatPrice(item.price) }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="order-footer">
+              <span class="order-date">
+                <mat-icon>calendar_today</mat-icon>
+                {{ formatDate(order.createdAt) }}
+              </span>
+              <div class="order-footer-right">
+                <span class="order-total">Total: <strong>{{ formatPrice(order.totalAmount) }}</strong></span>
+
+                @if (canReview(order)) {
+                  @if (hasReview(order._id)) {
+                    <!-- Ya tiene reseña: mostrar nota + opciones de editar/eliminar -->
+                    <div class="review-actions">
+                      <span class="review-badge">
+                        <mat-icon>star</mat-icon>
+                        {{ existingReview(order._id)?.rating }}/5
+                      </span>
+                      <button class="btn-review-edit" (click)="openEditModal(order)" title="Editar reseña">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button class="btn-review-delete" (click)="openDeleteConfirm(order._id)" title="Eliminar reseña">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  } @else {
+                    <button class="btn-review" (click)="openCreateModal(order)">
+                      <mat-icon>star_rate</mat-icon>
+                      Dejar Reseña
+                    </button>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+
+  <!-- Review Modal -->
+  @if (showReviewModal()) {
+    <div class="modal-overlay" (click)="closeReviewModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>star_rate</mat-icon>
+            {{ reviewModalMode() === 'edit' ? 'Editar Reseña' : 'Dejar Reseña' }}
+          </h2>
+          <button class="close-btn" (click)="closeReviewModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="review-restaurant-name">{{ reviewOrder()?.restaurant?.name }}</p>
+
+          @if (reviewError()) {
+            <div class="error-message">
+              <mat-icon>error</mat-icon>
+              {{ reviewError() }}
+            </div>
+          }
+
+          <div class="rating-group">
+            <label>Calificación *</label>
+            <div class="stars">
+              @for (star of [1,2,3,4,5]; track star) {
+                <button class="star-btn" [class.active]="star <= reviewRating()" (click)="setRating(star)" type="button">
+                  <mat-icon>{{ star <= reviewRating() ? 'star' : 'star_border' }}</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="review-comment">Comentario (opcional)</label>
+            <textarea
+              id="review-comment"
+              placeholder="¿Cómo fue tu experiencia?"
+              rows="3"
+              [value]="reviewComment()"
+              (input)="reviewComment.set($any($event.target).value)"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeReviewModal()" [disabled]="submittingReview()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" (click)="submitReview()" [disabled]="submittingReview() || reviewRating() === 0">
+            @if (submittingReview()) {
+              <span class="spinner-small"></span>
+              {{ reviewModalMode() === 'edit' ? 'Guardando...' : 'Enviando...' }}
+            } @else {
+              {{ reviewModalMode() === 'edit' ? 'Guardar Cambios' : 'Enviar Reseña' }}
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirm Modal -->
+  @if (showDeleteConfirm()) {
+    <div class="modal-overlay" (click)="closeDeleteConfirm()">
+      <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>warning</mat-icon>
+            Eliminar Reseña
+          </h2>
+          <button class="close-btn" (click)="closeDeleteConfirm()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p>¿Estás seguro de que deseas eliminar esta reseña? Esta acción no se puede deshacer.</p>
+          @if (deleteError()) {
+            <div class="error-message">
+              <mat-icon>error</mat-icon>
+              {{ deleteError() }}
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDeleteConfirm()" [disabled]="deletingReview()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deletingReview()">
+            @if (deletingReview()) {
+              <span class="spinner-small"></span>
+              Eliminando...
+            } @else {
+              Eliminar
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

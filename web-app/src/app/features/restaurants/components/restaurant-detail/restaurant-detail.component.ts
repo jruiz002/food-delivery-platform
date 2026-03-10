@@ -6,6 +6,7 @@ import { RestaurantService } from '../../services/restaurant.service';
 import { Restaurant, MenuFilters } from '../../models/restaurant.model';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
+import { OrdersService } from '../../../orders/services/orders.service';
 
 @Component({
   selector: 'app-restaurant-detail',
@@ -20,6 +21,7 @@ export class RestaurantDetailComponent implements OnInit {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private ordersService = inject(OrdersService);
 
   // Restaurant data
   restaurant = signal<Restaurant | null>(null);
@@ -52,9 +54,19 @@ export class RestaurantDetailComponent implements OnInit {
     tags: [''],
     available: [true]
   });
+
+  // Order modal signals
+  showOrderModal = signal(false);
+  orderingItem = signal<any | null>(null);
+  orderQuantity = signal(1);
+  placingOrder = signal(false);
+  orderSuccess = signal<string | null>(null);
+  orderError = signal<string | null>(null);
   
   // Current user
   currentUser = this.authService.currentUser;
+  isConsumer = this.authService.isConsumer;
+  isRestaurant = this.authService.isRestaurant;
   
   // Computed: check if current user is the owner
   isOwner = computed(() => {
@@ -387,5 +399,53 @@ export class RestaurantDetailComponent implements OnInit {
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString();
+  }
+
+  // Order modal methods
+  openOrderModal(item: any) {
+    this.orderingItem.set(item);
+    this.orderQuantity.set(1);
+    this.orderSuccess.set(null);
+    this.orderError.set(null);
+    this.showOrderModal.set(true);
+  }
+
+  closeOrderModal() {
+    this.showOrderModal.set(false);
+    this.orderingItem.set(null);
+    this.orderSuccess.set(null);
+    this.orderError.set(null);
+  }
+
+  increaseQuantity() {
+    this.orderQuantity.update(q => q + 1);
+  }
+
+  decreaseQuantity() {
+    if (this.orderQuantity() > 1) this.orderQuantity.update(q => q - 1);
+  }
+
+  placeOrder() {
+    const item = this.orderingItem();
+    const restaurantId = this.restaurantId();
+    if (!item || !restaurantId) return;
+
+    this.placingOrder.set(true);
+    this.orderError.set(null);
+
+    this.ordersService.create({
+      restaurant_id: restaurantId,
+      items: [{ menu_item_id: item._id, quantity: this.orderQuantity() }]
+    }).subscribe({
+      next: () => {
+        this.placingOrder.set(false);
+        this.orderSuccess.set(`¡Pedido realizado! ${this.orderQuantity()}x ${item.name}`);
+        setTimeout(() => this.closeOrderModal(), 2000);
+      },
+      error: (err) => {
+        this.placingOrder.set(false);
+        this.orderError.set(err.error?.message || 'Error al realizar el pedido. Intenta de nuevo.');
+      }
+    });
   }
 }
