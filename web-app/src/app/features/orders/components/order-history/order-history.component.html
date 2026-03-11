@@ -18,10 +18,37 @@
   <!-- Main content -->
   <main class="main-content">
     <div class="page-header">
-      <h1>
-        <mat-icon>receipt_long</mat-icon>
-        Mi Historial de Pedidos
-      </h1>
+      <div class="page-header-row">
+        <h1>
+          <mat-icon>receipt_long</mat-icon>
+          Mi Historial de Pedidos
+        </h1>
+        @if (reviewsByOrderId().size > 0 && !loading()) {
+          @if (!selectionMode()) {
+            <button class="btn-select-mode" (click)="enterSelectionMode()">
+              <mat-icon>checklist</mat-icon>
+              Seleccionar reseñas
+            </button>
+          } @else {
+            <button class="btn-secondary" (click)="exitSelectionMode()">
+              <mat-icon>close</mat-icon>
+              Cancelar selección
+            </button>
+          }
+        }
+      </div>
+      @if (selectionMode()) {
+        <div class="selection-bar">
+          <span class="selection-count">
+            <mat-icon>check_circle</mat-icon>
+            {{ selectedCount() }} reseña{{ selectedCount() !== 1 ? 's' : '' }} seleccionada{{ selectedCount() !== 1 ? 's' : '' }}
+          </span>
+          <button class="btn-danger" (click)="openBatchDeleteConfirm()" [disabled]="selectedCount() === 0">
+            <mat-icon>delete_sweep</mat-icon>
+            Eliminar seleccionadas
+          </button>
+        </div>
+      }
     </div>
 
     @if (loading()) {
@@ -77,17 +104,26 @@
                 @if (canReview(order)) {
                   @if (hasReview(order._id)) {
                     <!-- Ya tiene reseña: mostrar nota + opciones de editar/eliminar -->
-                    <div class="review-actions">
+                    <div class="review-actions" [class.selected]="selectionMode() && isReviewSelected(existingReview(order._id)!._id)">
+                      @if (selectionMode()) {
+                        <label class="review-checkbox-label">
+                          <input type="checkbox"
+                            [checked]="isReviewSelected(existingReview(order._id)!._id)"
+                            (change)="toggleReviewSelection(existingReview(order._id)!._id)">
+                        </label>
+                      }
                       <span class="review-badge">
                         <mat-icon>star</mat-icon>
                         {{ existingReview(order._id)?.rating }}/5
                       </span>
-                      <button class="btn-review-edit" (click)="openEditModal(order)" title="Editar reseña">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button class="btn-review-delete" (click)="openDeleteConfirm(order._id)" title="Eliminar reseña">
-                        <mat-icon>delete</mat-icon>
-                      </button>
+                      @if (!selectionMode()) {
+                        <button class="btn-review-edit" (click)="openEditModal(order)" title="Editar reseña">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button class="btn-review-delete" (click)="openDeleteConfirm(order._id)" title="Eliminar reseña">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
                     </div>
                   } @else {
                     <button class="btn-review" (click)="openCreateModal(order)">
@@ -161,6 +197,45 @@
               {{ reviewModalMode() === 'edit' ? 'Guardando...' : 'Enviando...' }}
             } @else {
               {{ reviewModalMode() === 'edit' ? 'Guardar Cambios' : 'Enviar Reseña' }}
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Batch Delete Confirm Modal -->
+  @if (showBatchDeleteConfirm()) {
+    <div class="modal-overlay" (click)="closeBatchDeleteConfirm()">
+      <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>delete_sweep</mat-icon>
+            Eliminar Reseñas
+          </h2>
+          <button class="close-btn" (click)="closeBatchDeleteConfirm()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>¿Estás seguro de que deseas eliminar <strong>{{ selectedCount() }} reseña{{ selectedCount() !== 1 ? 's' : '' }}</strong>? Esta acción no se puede deshacer.</p>
+          @if (batchDeleteError()) {
+            <div class="error-message">
+              <mat-icon>error</mat-icon>
+              {{ batchDeleteError() }}
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeBatchDeleteConfirm()" [disabled]="deletingBatch()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmBatchDelete()" [disabled]="deletingBatch()">
+            @if (deletingBatch()) {
+              <span class="spinner-small"></span>
+              Eliminando...
+            } @else {
+              Eliminar {{ selectedCount() }}
             }
           </button>
         </div>

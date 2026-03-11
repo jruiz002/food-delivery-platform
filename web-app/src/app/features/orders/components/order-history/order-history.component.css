@@ -77,13 +77,98 @@
 }
 
 /* Page Header */
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .page-header h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 1.75rem;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+}
+
+/* Selection mode button */
+.btn-select-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1.5px solid #ee8c2b;
+  border-radius: 8px;
+  color: #ee8c2b;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-select-mode:hover {
+  background-color: #ee8c2b;
+  color: white;
+}
+
+.btn-select-mode mat-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Selection bar */
+.selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: #fff3e0;
+  border: 1.5px solid #ee8c2b;
+  border-radius: 10px;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.selection-count {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #ee8c2b;
+}
+
+.selection-count mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Review checkbox */
+.review-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.review-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #c62828;
+  cursor: pointer;
+}
+
+/* Selected review highlight */
+.review-actions.selected {
+  background-color: #ffebee;
+  border-radius: 8px;
+  padding: 0.2rem 0.5rem;
 }
 
 .page-header mat-icon {

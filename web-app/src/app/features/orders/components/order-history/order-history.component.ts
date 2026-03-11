@@ -43,6 +43,13 @@ export class OrderHistoryComponent implements OnInit {
   deleteError = signal<string | null>(null);
   deleteTargetOrderId = signal<string | null>(null);
 
+  // Bulk selection
+  selectionMode = signal(false);
+  selectedReviewIds = signal<Set<string>>(new Set());
+  showBatchDeleteConfirm = signal(false);
+  deletingBatch = signal(false);
+  batchDeleteError = signal<string | null>(null);
+
   currentUser = this.authService.currentUser;
 
   ngOnInit() {
@@ -249,6 +256,73 @@ export class OrderHistoryComponent implements OnInit {
       error: (err) => {
         this.deletingReview.set(false);
         this.deleteError.set(err.error?.message || 'Error al eliminar la reseña.');
+      }
+    });
+  }
+
+  // ── Selección masiva ───────────────────────────────────────────────────────
+
+  selectedCount(): number {
+    return this.selectedReviewIds().size;
+  }
+
+  enterSelectionMode() {
+    this.selectionMode.set(true);
+    this.selectedReviewIds.set(new Set());
+  }
+
+  exitSelectionMode() {
+    this.selectionMode.set(false);
+    this.selectedReviewIds.set(new Set());
+  }
+
+  toggleReviewSelection(reviewId: string) {
+    const set = new Set(this.selectedReviewIds());
+    if (set.has(reviewId)) {
+      set.delete(reviewId);
+    } else {
+      set.add(reviewId);
+    }
+    this.selectedReviewIds.set(set);
+  }
+
+  isReviewSelected(reviewId: string): boolean {
+    return this.selectedReviewIds().has(reviewId);
+  }
+
+  openBatchDeleteConfirm() {
+    this.batchDeleteError.set(null);
+    this.showBatchDeleteConfirm.set(true);
+  }
+
+  closeBatchDeleteConfirm() {
+    this.showBatchDeleteConfirm.set(false);
+    this.batchDeleteError.set(null);
+  }
+
+  confirmBatchDelete() {
+    const ids = Array.from(this.selectedReviewIds());
+    if (ids.length === 0) return;
+
+    this.deletingBatch.set(true);
+    this.batchDeleteError.set(null);
+
+    this.reviewsService.deleteMany(ids).subscribe({
+      next: () => {
+        this.deletingBatch.set(false);
+        const map = new Map(this.reviewsByOrderId());
+        for (const [orderId, review] of map.entries()) {
+          if (ids.includes(review._id)) {
+            map.delete(orderId);
+          }
+        }
+        this.reviewsByOrderId.set(map);
+        this.exitSelectionMode();
+        this.closeBatchDeleteConfirm();
+      },
+      error: (err) => {
+        this.deletingBatch.set(false);
+        this.batchDeleteError.set(err.error?.message || 'Error al eliminar las reseñas.');
       }
     });
   }
